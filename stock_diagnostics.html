@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Diagnostic Tool</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Stock Diagnostic Tool</h1>
+    </header>
+    <main>
+        <section id="ai-gold-bull">
+            <h2>AI Gold Bull - Enhanced K-line Chart</h2>
+            <div id="chart-container">
+                <!-- K-line chart will be rendered here -->
+            </div>
+            <button id="analyze-button">Analyze Stocks</button>
+            <div id="diagnostics">
+                <!-- Stock diagnostics output will be shown here -->
+            </div>
+        </section>
+    </main>
+    <script src="charting_library.js"></script>
+    <script>
+        // JavaScript for initializing K-line chart with defense lines
+        const chartContainer = document.getElementById('chart-container');
+        const analyzeButton = document.getElementById('analyze-button');
+
+        analyzeButton.addEventListener('click', function() {
+            // Logic to fetch stock data and render the K-line chart
+            renderKLineChart();
+        });
+
+        function renderKLineChart() {
+            // Sample data and rendering logic for K-line chart with defense lines
+            const data = [/* stock data */];
+
+            const chart = new Chart(chartContainer, {
+                type: 'candlestick',
+                data: data,
+                options: {
+                    scales: {
+                        x: {
+                            title: 'Time',
+                        },
+                        y: {
+                            title: 'Price',
+                        }
+                    }
+                }
+            });
+
+            // Add defense lines
+            addDefenseLines(chart);
+        }
+
+        function addDefenseLines(chart) {
+            // Logic to calculate and draw defense lines on the chart
+        }
+    </script>
+</body>
+</html>
