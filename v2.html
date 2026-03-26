@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gold Cow K Line</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <canvas id="klineChart"></canvas>
+    <script>
+        const ctx = document.getElementById('klineChart').getContext('2d');
+        const chartData = {/* your K-line chart data here */};
+
+        const fcxData = { 
+            green: {/* your fcxGreen data here */}, 
+            red: {/* your fcxRed data here */}, 
+            yellow: {/* your fcxYellow data here */} 
+        };
+
+        const kLineChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [
+                    { label: 'K-Line', data: chartData },
+                    { label: 'Defense Line - Green', data: fcxData.green, borderColor: 'green', borderWidth: 1 },
+                    { label: 'Defense Line - Red', data: fcxData.red, borderColor: 'red', borderWidth: 1 },
+                    { label: 'Defense Line - Yellow', data: fcxData.yellow, borderColor: 'yellow', borderWidth: 1 }
+                ]
+            },
+            options: {
+                scales: {
+                    x: { type: 'time' },
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
