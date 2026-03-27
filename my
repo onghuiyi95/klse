@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬股 AI 篩選器 - 終極修復版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#0f172a', darker: '#0b1120', card: '#1e293b',
+                        primary: '#3b82f6', up: '#26a69a', down: '#ef5350'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .cursor-blink::after { content: '|'; animation: blink 1s step-start infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        .modal-enter { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .tv-lightweight-charts { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .tab-active { border-bottom: 3px solid #3b82f6; color: white; }
+        .strategy-btn.active-strat { background-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); transform: scale(1.05); }
+        #tvChartContainer canvas, #subChartContainer canvas { width: 100% !important; height: 100% !important; }
+    </style>
+</head>
+<body class="bg-darker text-slate-300 font-sans min-h-screen flex flex-col">
+
+    <!-- Header & Navigation -->
+    <header class="bg-card border-b border-slate-700 sticky top-0 z-20 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-3">
+                    <div class="bg-primary text-white p-2 rounded-lg shadow-lg shadow-primary/30">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-white tracking-wide hidden md:block">Bursa AI <span class="text-primary">Quant</span></h1>
+                </div>
+                <nav class="flex h-16 items-center gap-6 text-sm font-medium">
+                    <button onclick="switchTab('realtime')" id="tab-realtime" class="h-full px-2 transition-all tab-active">實時行情</button>
+                    <button onclick="switchTab('quant')" id="tab-quant" class="h-full px-2 transition-all text-slate-400 hover:text-white">量化策略</button>
+                </nav>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <div class="relative hidden sm:block">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 z-40"></i>
+                    <input type="text" id="globalSearch" placeholder="搜尋代碼或名稱..." oninput="debounceSearch()" autocomplete="off" class="bg-dark border border-slate-600 rounded-full py-1.5 pl-10 pr-4 text-sm focus:outline-none focus:border-primary text-white w-52 transition-all focus:w-64 relative z-30 shadow-inner">
+                    <div id="searchDropdown" class="absolute top-full left-0 right-0 bg-slate-800 border border-slate-600 rounded-lg mt-2 z-50 hidden max-h-60 overflow-y-auto shadow-2xl divide-y divide-slate-700"></div>
+                </div>
+                <button onclick="generateMarketReview()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-2 border border-indigo-500 shadow-lg">
+                    <i class="fa-solid fa-clipboard-list"></i> <span class="hidden sm:inline">大盤復盤</span>
+                </button>
+                <button onclick="syncFromKLSEScreener()" class="bg-slate-700 hover:bg-primary text-white px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-2 border border-slate-600 shadow-lg">
+                    <i class="fa-solid fa-sync-alt" id="syncIcon"></i> <span>同步數據</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+        <!-- 📡 分頁 1: 實時行情 -->
+        <div id="page-realtime" class="flex flex-col md:flex-row gap-6">
+            <aside class="w-full md:w-64 flex-shrink-0">
+                <div class="bg-card rounded-xl border border-slate-700 p-5 sticky top-24 shadow-lg">
+                    <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-filter text-primary"></i> 智能篩選</h2>
+                    <select id="signalFilter" onchange="applyFilters()" class="w-full bg-dark border border-slate-600 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-primary">
+                        <option value="all">所有信號</option>
+                        <option value="Bullish">🔥 動量看漲</option>
+                        <option value="Neutral">⚖️ 中立盤整</option>
+                        <option value="Bearish">⚠️ 動量看跌</option>
+                    </select>
+                    <button onclick="resetAllFilters()" class="mt-6 w-full py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm transition-colors shadow-md">重置篩選</button>
+                </div>
+            </aside>
+
+            <div class="flex-grow bg-card rounded-xl border border-slate-700 overflow-hidden flex flex-col relative min-h-[500px] shadow-lg">
+                <div id="loadingOverlay" class="hidden absolute inset-0 bg-dark/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-center p-6">
+                    <i class="fa-solid fa-circle-notch fa-spin text-4xl text-primary mb-4"></i>
+                    <p id="loadingText" class="text-white font-medium">正在拉取 KLSE 實時數據...</p>
+                </div>
+                <div class="bg-slate-800 px-4 py-3 border-b border-slate-700 flex justify-between items-center text-xs text-slate-400">
+                    <span>還原經典 Quote 解析模式</span>
+                    <span>共加載 <strong id="stockCount" class="text-white text-sm">0</strong> 隻實時股票</span>
+                </div>
+                <div class="overflow-x-auto flex-grow">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-800 text-slate-300 text-sm border-b border-slate-700 sticky top-0 z-10">
+                            <tr>
+                                <th class="py-3 px-4 font-medium cursor-pointer hover:text-white" onclick="sortTable('code')">代碼/名稱 <i class="fa-solid fa-sort ml-1 text-xs"></i></th>
+                                <th class="py-3 px-4 font-medium text-right cursor-pointer hover:text-white" onclick="sortTable('price')">最新價格 <i class="fa-solid fa-sort ml-1 text-xs"></i></th>
+                                <th class="py-3 px-4 font-medium text-right cursor-pointer hover:text-white" onclick="sortTable('change')">漲跌幅 <i class="fa-solid fa-sort ml-1 text-xs"></i></th>
+                                <th class="py-3 px-4 font-medium text-center">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockTableBody" class="text-sm divide-y divide-slate-700">
+                            <tr><td colspan="4" class="py-20 text-center text-slate-500">點擊同步按鈕獲取實時數據</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📊 分頁 2: 量化策略 -->
+        <div id="page-quant" class="hidden flex flex-col gap-6">
+            <div class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2 mb-4">
+                <button onclick="loadStrategyData(1, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-white transition-all">爆庄套利</button>
+                <button onclick="loadStrategyData(2, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-white transition-all">無敵獵庄</button>
+                <button onclick="loadStrategyData(3, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-white transition-all">爆漲神助</button>
+                <button onclick="loadStrategyData(4, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-white transition-all">瘋牛出閘</button>
+                <button onclick="loadStrategyData(5, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-white transition-all">與庄共舞</button>
+                <button onclick="loadStrategyData(6, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-white transition-all">強庄鎖倉</button>
+                <button onclick="loadStrategyData(7, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-white transition-all">頂庄博弈</button>
+                <button onclick="loadStrategyData(8, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-white transition-all">短線暴利</button>
+                <button onclick="loadStrategyData(9, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-white transition-all">極限撈底</button>
+                <button onclick="loadStrategyData(10, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-white transition-all">庄家起爆</button>
+            </div>
+            <div class="bg-card rounded-xl border border-slate-700 overflow-hidden shadow-lg min-h-[500px]">
+                <div class="bg-slate-800 px-6 py-4 border-b border-slate-700">
+                    <h3 id="strategyTitle" class="text-lg font-bold text-white"><i class="fa-solid fa-bolt text-yellow-400 mr-2"></i> 量化策略名單</h3>
+                    <p id="strategyDesc" class="text-xs text-slate-400 mt-2 leading-relaxed">請選擇策略進行市場深度掃描。</p>
+                </div>
+                <div id="strategyContent" class="overflow-x-auto"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 分析視窗 (深度聯動版) -->
+    <div id="aiModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-card border border-slate-600 rounded-2xl shadow-2xl w-full max-w-4xl modal-enter overflow-hidden flex flex-col max-h-[95vh]">
+            <div class="bg-slate-800 px-6 py-4 border-b border-slate-700 flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary border border-primary/30">
+                        <i class="fa-solid fa-dna text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white leading-tight" id="modalStockName">--</h3>
+                        <p class="text-xs text-slate-400">主力量化分析 (Source: Yahoo Finance)</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('aiModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-times text-lg"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-grow flex flex-col gap-4">
+                <div class="flex flex-col sm:flex-row gap-4 items-end">
+                    <div class="bg-dark p-3 rounded-lg border border-slate-700 w-full sm:w-1/3 text-center">
+                        <div class="text-xs text-slate-400 mb-1">演算法終極評級</div>
+                        <div class="text-xl font-bold mt-1 tracking-wider" id="modalSignal">--</div>
+                    </div>
+                    <div class="w-full sm:w-2/3 flex flex-col sm:flex-row justify-end gap-2">
+                        <!-- 新增：主圖指標切換選單 -->
+                        <select id="mainChartSelect" onchange="toggleMainIndicator()" class="w-full sm:w-auto bg-dark border border-slate-600 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-primary cursor-pointer shadow-inner">
+                            <option value="none">🕯️ 純 K 線 (無主圖指標)</option>
+                            <option value="trend">📈 趨勢階梯 (Trend Ladder)</option>
+                        </select>
+                        <select id="indicatorSelect" onchange="switchIndicator()" class="w-full sm:w-auto bg-dark border border-slate-600 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-primary cursor-pointer shadow-inner">
+                            <option value="banker">🎗️ 主力節奏 (Banker Rhythm)</option>
+                            <option value="accumulation">📥 主力吸籌 (Banker Accumulation)</option>
+                            <option value="bbd">📈 BBD (資金動能)</option>
+                            <option value="macd">📉 MACD (趨勢指標)</option>
+                            <option value="volume">📊 Volume (成交量)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- 容器強制高度與背景 -->
+                <div id="tvChartContainer" class="w-full h-[400px] min-h-[400px] border border-slate-700 rounded-t-lg bg-[#131722] relative"></div>
+                <div id="subChartContainer" class="w-full h-[250px] min-h-[250px] border border-slate-700 border-t-0 rounded-b-lg bg-[#131722] relative"></div>
+                
+                <div class="border-l-2 border-primary pl-4 bg-dark/50 rounded-r-lg p-4 mt-2 min-h-[130px]">
+                    <div id="aiLoading" class="flex items-center gap-2 text-primary font-medium py-2">
+                        <i class="fa-solid fa-gear fa-spin"></i> 正在呼叫 Gemini 生成深度量化報告...
+                    </div>
+                    <div id="aiContent" class="text-slate-300 leading-relaxed space-y-3 hidden text-sm"></div>
+                </div>
+            </div>
+            <div class="bg-slate-800 px-6 py-3 border-t border-slate-700 text-right shrink-0">
+                <button onclick="closeModal('aiModal')" class="px-5 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-lg">確認關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 大盤復盤 Modal -->
+    <div id="reviewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-card border border-indigo-500/50 rounded-2xl shadow-2xl w-full max-w-2xl modal-enter overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-slate-800 px-6 py-4 border-b border-slate-700 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-indigo-600/20 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
+                        <i class="fa-solid fa-bullseye text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white">🎯 系統大盤復盤</h3>
+                </div>
+                <button onclick="closeModal('reviewModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-times text-lg"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-grow" id="reviewContent"></div>
+            <div class="bg-slate-800 px-6 py-3 border-t border-slate-700 text-right shadow-inner">
+                <button onclick="closeModal('reviewModal')" class="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold">確認關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PROXY_URL = 'https://script.google.com/macros/s/AKfycbwNxtWwgZhGV7giqEViIsZzELNFyqviC42xDqw_zS4xqhG5UFHt-izvKvsQxubDIAwMpw/exec?url=';
+        const apiKey = ""; 
+
+        const STRATEGY_DESC = {
+            1: "監控主力資金爆發性流入。主看 BBD 資金動能翻紅。",
+            2: "結合 Banker Rhythm，鎖定即將起飛的個股。",
+            3: "大數據篩選具備爆發基因的股票，適合追蹤強勢行情。",
+            4: "捕捉主升浪瘋牛股，回踩支撐位即是買點。",
+            5: "與莊家共舞，同步主力的操作節奏。",
+            6: "強勢莊家高度鎖倉，籌碼穩定，適合中長線。",
+            7: "識別莊家出貨與洗盤，尋找空中加油機會。",
+            8: "短線資金活躍，波動極大，結合 BBD 信號。",
+            9: "捕捉非理性超跌後的底背離。主看「主力吸籌」。",
+            10: "隱秘吸籌後的第一根放量長陽，信號明確，起步速度快。"
+        };
+
+        const _base = atob("aHR0cHM6Ly9oY20ucnpmd3EuY29tL2h3aGNuZXdBL2x6d19jaG9vc2VTdG9ja0RhdGFWMi5zaG9w");
+        const _t1 = atob("ZjM4N2RiODk2MWNjYmJlZjRjODZlMDI0NmI2MDY2OWJiMDFlMDY0ODBlNDQ1ZmM2");
+        const _t2 = atob("ZjM4N2RiODk2MWNjYmJlZjM4NTY3YWVlZjI2N2Y3MmEyY2Y0MDkxZjdjNzk2MTBj");
+        function _getStratUrl(id, sp=false){ return `${_base}?jwcode=${sp?_t2:_t1}&id=${id}&from=1&version=1.0&city=my&language=cn`; }
+        const STRATEGY_URLS = { 1:_getStratUrl(37), 2:_getStratUrl(38), 3:_getStratUrl(34), 4:_getStratUrl(35), 5:_getStratUrl(36), 6:_getStratUrl(33), 7:_getStratUrl(32), 8:_getStratUrl(31), 9:_getStratUrl(29, true), 10:_getStratUrl(30) };
+
+        let currentStrategyIndex = 1;
+        let currentData = [];
+        let displayData = [];
+        let tvChartObj = null, subChartObj = null, mainCandleSeries = null, trendRibbonSeries = null, m4LineSeries = null;
+        let globalKlines = []; 
+        let typeWriterTimeout = null;
+        let sortCol = '', sortAsc = false;
+
+        function rma(s, l) { if(!s || !s.length) return []; let a=1/l, r=[s[0]], m=s[0]; for(let i=1; i<s.length; i++) { m=a*s[i]+(1-a)*m; r.push(m); } return r; }
+        function ema(s, l) { if(!s || !s.length) return []; let k=2/(l+1), r=[s[0]], m=s[0]; for(let i=1; i<s.length; i++) { m=(s[i]-m)*k+m; r.push(m); } return r; }
+
+        // ==========================================
+        // 核心同步邏輯 (經典模式)
+        // ==========================================
+        async function syncFromKLSEScreener() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.remove('hidden');
+            try {
+                const targetUrl = encodeURIComponent("https://www.klsescreener.com/v2/screener/quote_results");
+                const response = await fetch(PROXY_URL + targetUrl);
+                let htmlText = await response.text();
+                try { const json = JSON.parse(htmlText); if(json.content) htmlText = json.content; } catch(e) {}
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlText, 'text/html');
+                const rows = doc.querySelectorAll('tr');
+                currentData = [];
+                rows.forEach((row, index) => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length < 5) return;
+                    let code = "", name = "", codeIdx = -1;
+                    for (let i = 0; i < Math.min(cells.length, 5); i++) {
+                        let text = cells[i].innerText.trim();
+                        if (/^\d{4}$/.test(text)) { code = text; codeIdx = i; name = cells[i-1] ? cells[i-1].innerText.trim().replace(/\s*\[[Ss]\]/g, '').trim() : "未知"; break; }
+                    }
+                    if (codeIdx !== -1) {
+                        let priceText = cells[codeIdx + 2] ? cells[codeIdx + 2].innerText.trim() : "0";
+                        let changeText = cells[codeIdx + 4] ? cells[codeIdx + 4].innerText.trim().replace('%', '') : "0";
+                        const p = parseFloat(priceText.replace(/,/g, ''));
+                        const c = parseFloat(changeText);
+                        if (!isNaN(p) && code) {
+                            currentData.push({ id: index, code, name, price: p.toFixed(2), change: isNaN(c) ? "0.00" : c.toFixed(2), signal: c > 1.2 ? 'Bullish' : (c < -1.2 ? 'Bearish' : 'Neutral') });
+                        }
+                    }
+                });
+                applyFilters();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('stockTableBody').innerHTML = `<tr><td colspan="4" class="py-20 text-center text-red-400">數據獲取異常。</td></tr>`;
+            } finally { overlay.classList.add('hidden'); }
+        }
+
+        // ==========================================
+        // 量化計算與 Gemini 動態分析
+        // ==========================================
+        function performQuantAnalysis(klines) {
+            if(!klines.length) return { bankerVal:0, bankerBull:false, macdBull:false, finalSignal:'Neutral'};
+            const close = klines.map(k => k.close);
+            const e12 = ema(close, 12); const e26 = ema(close, 26);
+            const macd = e12.map((v, i) => v - e26[i]);
+            const sigLine = ema(macd, 9);
+            const hist = macd[macd.length-1] - sigLine[sigLine.length-1];
+            let var0 = [];
+            for (let i = 0; i < klines.length; i++) {
+                const win = klines.slice(Math.max(0, i-59), i+1);
+                let h60 = Math.max(...win.map(k => k.high)); let l60 = Math.min(...win.map(k => k.low));
+                var0.push(h60 === l60 ? 50 : ((klines[i].close - l60) / (h60 - l60)) * 100);
+            }
+            const var1 = rma(rma(var0, 3), 4);
+            const val = var1[var1.length-1] - 10;
+            const prev = var1[var1.length-2] - 10;
+            let score = 0;
+            if (val > 50) score += 2; else if (val > prev) score += 1;
+            if (hist > 0) score += 1;
+            return { bankerVal: val.toFixed(1), bankerBull: val > prev, macdBull: hist > 0, finalSignal: score >= 1 ? 'Bullish' : 'Bearish' };
+        }
+
+        async function generateDetailedAIText(q, stock) {
+            const node = document.getElementById('aiContent');
+            node.classList.remove('hidden'); 
+            document.getElementById('aiLoading').classList.remove('hidden');
+            node.innerHTML = '';
+
+            const stage = currentStrategyIndex === 9 ? '吸籌階段' : '拉升階段';
+            const prompt = `你是一位資深的馬股(Bursa Malaysia)量化分析師。請根據以下技術指標為股票 ${stock.name} (${stock.code}) 寫一份簡短且專業的個股分析報告。
+            目前量化數據：
+            - 當前階段: ${stage}
+            - 主力控盤度 (Banker Value): ${q.bankerVal} (大於50表示高度控盤)
+            - 資金動能趨勢: ${q.bankerBull ? '轉強' : '觀望/轉弱'}
+            - MACD趨勢: ${q.macdBull ? '多頭' : '空頭'}
+            - 系統綜合判定: ${q.finalSignal === 'Bullish' ? '看漲' : '盤整/看跌'}
+
+            請使用 Tailwind HTML 格式排版輸出。可以包含 <p>, <ul>, <li>, <strong>, <span> 等標籤。
+            請使用 text-slate-300 作為預設文字顏色，並適當使用 text-up (看漲的青綠色), text-down (看跌的紅色), text-primary (藍色,用來強調), text-white (亮白)。
+            注意：請直接輸出純 HTML 代碼，絕對不要包含任何開場白（如："這是一份..."）、結語或 markdown 標記。`;
+
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, { 
+                    method: "POST", headers: { "Content-Type": "application/json" }, 
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
+                });
+                const json = await res.json();
+                let rawText = json.candidates?.[0]?.content?.parts?.[0]?.text || "<p class='text-slate-400'>無法生成分析。</p>";
+                
+                const codeBlockRegex = new RegExp('\\x60\\x60\\x60(?:html)?\\s*([\\s\\S]*?)\\s*\\x60\\x60\\x60');
+                let htmlMatch = rawText.match(codeBlockRegex);
+                let aiHtml = htmlMatch ? htmlMatch[1] : rawText.replace(/\x60\x60\x60html/gi, '').replace(/\x60\x60\x60/g, '').trim();
+                
+                document.getElementById('aiLoading').classList.add('hidden');
+                node.innerHTML = aiHtml;
+            } catch (e) { 
+                document.getElementById('aiLoading').classList.add('hidden');
+                node.innerHTML = "<p class='text-down'>AI 暫時離線或請求失敗，請稍後再試。</p>"; 
+            }
+        }
+
+        // ==========================================
+        // 圖表系統
+        // ==========================================
+        async function openAIModal(id) {
+            const stock = currentData.find(s => s.id === id);
+            if(!stock) return;
+            document.getElementById('modalStockName').textContent = `${stock.name} (${stock.code})`;
+            document.getElementById('aiModal').classList.remove('hidden');
+            document.getElementById('aiLoading').classList.remove('hidden');
+            document.getElementById('aiContent').classList.add('hidden');
+            
+            let defaultIndicator = currentStrategyIndex === 9 ? 'accumulation' : 'banker';
+            document.getElementById('indicatorSelect').value = defaultIndicator;
+
+            try {
+                const symbol = stock.code + ".KL";
+                const target = encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1y`);
+                const res = await fetch(PROXY_URL + target);
+                const data = await res.json();
+                const quote = data.chart.result[0].indicators.quote[0];
+                globalKlines = [];
+                for (let i = 0; i < data.chart.result[0].timestamp.length; i++) {
+                    if (quote.close[i] == null) continue;
+                    globalKlines.push({ 
+                        time: new Date(data.chart.result[0].timestamp[i]*1000).toISOString().split('T')[0], 
+                        open: quote.open[i], high: quote.high[i], low: quote.low[i], close: quote.close[i], volume: quote.volume[i] || 0
+                    });
+                }
+                
+                setTimeout(() => {
+                    renderMainChart(globalKlines);
+                    drawIndicator(defaultIndicator);
+                    const q = performQuantAnalysis(globalKlines);
+                    document.getElementById('modalSignal').innerHTML = `<span class="${q.finalSignal==='Bullish'?'text-up':'text-down'}">${q.finalSignal==='Bullish'?'🔥 強勢看漲':'⚠️ 盤整信號'}</span>`;
+                    generateDetailedAIText(q, stock);
+                }, 100);
+            } catch (e) { 
+                console.error(e);
+                document.getElementById('aiLoading').innerHTML = `<span class="text-down">圖表加載失敗</span>`; 
+            }
+        }
+
+        function renderMainChart(data) {
+            const mb = document.getElementById('tvChartContainer');
+            mb.innerHTML = '';
+            tvChartObj = LightweightCharts.createChart(mb, { 
+                autoSize: true, 
+                layout: { textColor: '#d1d4dc', background: { type: 'solid', color: '#131722' } },
+                grid: { vertLines: { visible: false }, horzLines: { color: '#2b2b43' } },
+                timeScale: { visible: false }
+            });
+            mainCandleSeries = tvChartObj.addCandlestickSeries({ upColor: '#26a69a', downColor: '#ef5350', borderVisible: false, wickUpColor: '#26a69a', wickDownColor: '#ef5350' });
+            mainCandleSeries.setData(data);
+
+            const showTrend = document.getElementById('mainChartSelect').value === 'trend';
+
+            // 趨勢階梯 (Trend Ladder) 計算與繪圖
+            let jj = data.map(k => (k.high + k.low + k.close) / 3);
+            let a_ema = ema(jj, 13);
+            let ribbonData = [];
+            for (let i = 1; i < a_ema.length; i++) {
+                let t = data[i].time;
+                let A = a_ema[i];
+                let B = a_ema[i-1];
+                let isUp = A > B;
+                let col = isUp ? 'rgba(38, 166, 154, 0.6)' : 'rgba(239, 83, 80, 0.6)'; 
+                if(!isNaN(A) && !isNaN(B)) {
+                    ribbonData.push({ time: t, open: B, close: A, high: Math.max(A, B), low: Math.min(A, B), color: col, borderColor: col, wickColor: col });
+                }
+            }
+            trendRibbonSeries = tvChartObj.addCandlestickSeries({ borderVisible: false, lastValueVisible: false, priceLineVisible: false, visible: showTrend });
+            trendRibbonSeries.setData(ribbonData);
+
+            // M4 趨勢生命線
+            let closes = data.map(k => k.close);
+            let m2 = ema(closes, 8);
+            let m4 = ema(m2, 55);
+            let m4Data = [];
+            for (let i = 0; i < m4.length; i++) {
+                if(!isNaN(m4[i])) m4Data.push({ time: data[i].time, value: m4[i] });
+            }
+            m4LineSeries = tvChartObj.addLineSeries({ color: '#f5cb5c', lineWidth: 2, lastValueVisible: false, priceLineVisible: false, visible: showTrend });
+            m4LineSeries.setData(m4Data);
+
+            tvChartObj.timeScale().fitContent();
+        }
+
+        function toggleMainIndicator() {
+            const show = document.getElementById('mainChartSelect').value === 'trend';
+            if (trendRibbonSeries) trendRibbonSeries.applyOptions({ visible: show });
+            if (m4LineSeries) m4LineSeries.applyOptions({ visible: show });
+        }
+
+        function drawIndicator(type) {
+            const sub = document.getElementById('subChartContainer');
+            sub.innerHTML = '';
+            subChartObj = LightweightCharts.createChart(sub, { 
+                autoSize: true, 
+                layout: { textColor: '#d1d4dc', background: { type: 'solid', color: '#131722' } },
+                grid: { vertLines: { visible: false }, horzLines: { color: '#2b2b43' } },
+                timeScale: { borderColor: '#2b2b43', timeVisible: true }
+            });
+            
+            tvChartObj.timeScale().subscribeVisibleTimeRangeChange(r => subChartObj.timeScale().setVisibleRange(r));
+
+            const closes = globalKlines.map(k => k.close);
+            const lows = globalKlines.map(k => k.low);
+            const highs = globalKlines.map(k => k.high);
+            const opens = globalKlines.map(k => k.open);
+            let markers = [];
+
+            if (type === 'bbd') {
+                let al = [];
+                for (let i = 0; i < globalKlines.length; i++) { al.push((globalKlines[i].close + globalKlines[i].low + globalKlines[i].high) / 3); }
+                let rma_al_5 = rma(al, 5); let rma_al_21 = rma(al, 21);
+                let ao = []; for (let i = 0; i < globalKlines.length; i++) { ao.push(rma_al_5[i] - rma_al_21[i]); }
+                let rma_ao_3 = rma(ao, 3);
+                
+                let bbd = [];
+                for (let i = 0; i < globalKlines.length; i++) { bbd.push((ao[i] - rma_ao_3[i]) * 100); }
+
+                let bbdData = [];
+                for (let i = 1; i < bbd.length; i++) {
+                    let t = globalKlines[i].time, v = bbd[i], prev_v = bbd[i-1], prev2_v = i > 1 ? bbd[i-2] : prev_v;
+                    let isUp = v >= prev_v, wasUp = prev_v >= prev2_v;
+                    let col = isUp ? 'rgba(38, 166, 154, 0.9)' : 'rgba(239, 83, 80, 0.9)'; 
+
+                    if(!isNaN(v) && !isNaN(prev_v)) {
+                        bbdData.push({ time: t, open: prev_v, close: v, high: Math.max(prev_v, v), low: Math.min(prev_v, v), color: col, borderColor: col, wickColor: col });
+                        if (i > 1) {
+                            let isBuy = false, isSell = false;
+                            if ((!wasUp && isUp) || (prev_v <= 0 && v > 0)) isBuy = true;
+                            if ((wasUp && !isUp) || (prev_v >= 0 && v < 0)) isSell = true;
+                            if (isBuy) markers.push({ time: t, position: 'belowBar', color: '#4caf50', shape: 'arrowUp', text: 'B' });
+                            else if (isSell) markers.push({ time: t, position: 'aboveBar', color: '#e91e63', shape: 'arrowDown', text: 'S' });
+                        }
+                    }
+                }
+                const bbdSeries = subChartObj.addCandlestickSeries({ borderVisible: false }); 
+                bbdSeries.setData(bbdData);
+                bbdSeries.createPriceLine({ price: 0, color: '#f5cb5c', lineWidth: 1, lineStyle: 1 });
+                
+            } else if (type === 'banker') {
+                let var0 = [], var4 = [];
+                for (let i = 0; i < globalKlines.length; i++) {
+                    const win = globalKlines.slice(Math.max(0, i - 59), i + 1);
+                    let h60 = -Infinity, l60 = Infinity;
+                    for(let k of win) { if(k.high > h60) h60 = k.high; if(k.low < l60) l60 = k.low; }
+                    if(h60 === l60) { var0.push(50); var4.push(50); } else {
+                        var0.push(((globalKlines[i].close - l60) / (h60 - l60)) * 100);
+                        var4.push(((h60 - globalKlines[i].close) / (h60 - l60)) * 100);
+                    }
+                }
+                const var1Raw = rma(rma(var0, 3), 4); const var2Raw = rma(rma(var4, 3), 4);
+                
+                let ribbon1Data = [], ribbon2Data = [];
+                for (let i = 1; i < var1Raw.length; i++) {
+                    let t = globalKlines[i].time, v1 = var1Raw[i] - 10, v2 = var2Raw[i] - 90;
+                    let prev_v1 = var1Raw[i-1] - 10, prev_v2 = var2Raw[i-1] - 90, prev2_v1 = i > 1 ? var1Raw[i-2] - 10 : prev_v1;
+                    
+                    // 根據需求：Banker Rhythm (主力節奏) 紅青對調
+                    let col = (v1 >= prev_v1) ? 'rgba(239, 83, 80, 0.9)' : 'rgba(38, 166, 154, 0.9)'; 
+
+                    if(!isNaN(v1) && !isNaN(v2) && !isNaN(prev_v1) && !isNaN(prev_v2)) {
+                        ribbon1Data.push({ time: t, open: prev_v1, close: v1, high: Math.max(prev_v1, v1), low: Math.min(prev_v1, v1), color: col, borderColor: col, wickColor: col });
+                        ribbon2Data.push({ time: t, open: prev_v2, close: v2, high: Math.max(prev_v2, v2), low: Math.min(prev_v2, v2), color: col, borderColor: col, wickColor: col });
+                        if (i > 1) {
+                            if (prev_v1 <= 50 && v1 > 50) markers.push({ time: t, position: 'aboveBar', color: '#e91e63', shape: 'arrowDown', text: 'C' });
+                            if (prev_v1 >= 50 && v1 < 50) markers.push({ time: t, position: 'aboveBar', color: '#ff9800', shape: 'arrowDown', text: 'S' });
+                            let hasB = false;
+                            if (prev_v1 <= 0 && v1 > 0) hasB = true;
+                            if (prev_v1 <= prev2_v1 && v1 > prev_v1 && v1 < 10) hasB = true;
+                            if (hasB) markers.push({ time: t, position: 'belowBar', color: '#4caf50', shape: 'arrowUp', text: 'B' });
+                        }
+                    }
+                }
+                const ribbon1 = subChartObj.addCandlestickSeries({ borderVisible: false }); ribbon1.setData(ribbon1Data);
+                ribbon1.createPriceLine({ price: 50, color: 'rgba(255, 235, 59, 0.4)', lineWidth: 1, lineStyle: 2 });
+                ribbon1.createPriceLine({ price: 0, color: '#888', lineWidth: 1, lineStyle: 1 });
+                const ribbon2 = subChartObj.addCandlestickSeries({ borderVisible: false }); ribbon2.setData(ribbon2Data);
+                ribbon2.createPriceLine({ price: -50, color: 'rgba(255, 235, 59, 0.4)', lineWidth: 1, lineStyle: 2 });
+
+            } else if (type === 'accumulation') {
+                let var1 = globalKlines.map((k, i) => (k.open + k.high + k.low + k.close) / 4);
+                let m = globalKlines.map((k, i) => i === 0 ? 0 : Math.max(k.low - var1[i-1], 0));
+                let abs_diff = globalKlines.map((k, i) => i === 0 ? 0 : Math.abs(k.low - var1[i-1]));
+                let var2 = rma(abs_diff, 13).map((v, i) => v / (rma(m, 10)[i] || 1));
+                let var3 = ema(var2, 10);
+                let var5 = ema(globalKlines.map((k, i) => (k.low <= Math.min(...lows.slice(Math.max(0, i-32), i+1))) ? var3[i] : 0), 3);
+                let diff = globalKlines.map((c, i) => i === 0 ? 0 : c.close - globalKlines[i-1].close);
+                let rsi1 = rma(diff.map(v => Math.max(v, 0)), 12).map((v, i) => (v / (rma(diff.map(v => Math.abs(v)), 12)[i] || 1)) * 100);
+                let accData = [];
+                for (let i = 1; i < var5.length; i++) {
+                    let col = rsi1[i] < 30 ? (var5[i] > (var5[i-1]||0) ? 'rgba(239, 83, 80, 0.9)' : 'rgba(38, 166, 154, 0.9)') : 'rgba(100, 100, 100, 0.2)';
+                    accData.push({ time: globalKlines[i].time, value: var5[i], color: col });
+                }
+                subChartObj.addHistogramSeries({ base: 0 }).setData(accData);
+
+            } else if (type === 'volume') {
+                const volSeries = subChartObj.addHistogramSeries({ color: '#26a69a', priceFormat: { type: 'volume' } });
+                const volData = globalKlines.map((k, i) => ({
+                    time: k.time, value: k.volume,
+                    color: (i > 0 && k.close < globalKlines[i-1].close) ? 'rgba(239, 83, 80, 0.8)' : 'rgba(38, 166, 154, 0.8)'
+                }));
+                volSeries.setData(volData);
+
+            } else if (type === 'macd') {
+                const ema12 = ema(closes, 12); const ema26 = ema(closes, 26);
+                let macdLine = []; for(let i=0; i<closes.length; i++) { macdLine.push(ema12[i] - ema26[i]); }
+                const signalLine = ema(macdLine, 9);
+                let macdData = [], signalData = [], histData = [];
+                for(let i=0; i<closes.length; i++) {
+                    let t = globalKlines[i].time; let hist = macdLine[i] - signalLine[i];
+                    macdData.push({ time: t, value: macdLine[i] }); signalData.push({ time: t, value: signalLine[i] });
+                    histData.push({ time: t, value: hist, color: hist >= 0 ? 'rgba(38, 166, 154, 0.8)' : 'rgba(239, 83, 80, 0.8)' });
+                }
+                subChartObj.addHistogramSeries({ base: 0 }).setData(histData);
+                subChartObj.addLineSeries({ color: '#2962FF', lineWidth: 2 }).setData(macdData);
+                subChartObj.addLineSeries({ color: '#FF6D00', lineWidth: 2 }).setData(signalData);
+            }
+
+            if (mainCandleSeries) mainCandleSeries.setMarkers(markers);
+            subChartObj.timeScale().fitContent();
+        }
+
+        async function loadStrategyData(index, btn) {
+            currentStrategyIndex = index;
+            document.querySelectorAll('.strategy-btn').forEach(b => b.classList.remove('active-strat'));
+            btn.classList.add('active-strat');
+            document.getElementById('strategyDesc').innerText = STRATEGY_DESC[index];
+            const container = document.getElementById('strategyContent');
+            container.innerHTML = `<div class="py-32 text-center text-primary font-bold">正在掃描量化矩陣...</div>`;
+            try {
+                const res = await fetch(PROXY_URL + encodeURIComponent(STRATEGY_URLS[index]));
+                const json = await res.json();
+                let html = '';
+                json[0].data.forEach(block => {
+                    html += `<div class="px-6 py-2 bg-slate-800/50 text-[10px] font-bold text-slate-400 border-y border-slate-700">${block.stockType} (${block.dataChild.length})</div><table class="w-full text-left"><tbody class="divide-y divide-slate-800">`;
+                    block.dataChild.forEach(s => {
+                        const isUp = parseFloat(s.rose) >= 0;
+                        let tag = index === 9 ? '主力開始吸籌' : (index === 1 ? '資金集中度高' : '符合策略形態');
+                        let cleanName = s.stockName.replace(/\s*\[[Ss]\]/g, '').replace(/\([A-Za-z0-9]+\)/g, '').trim();
+                        html += `<tr class="hover:bg-slate-700/30 cursor-pointer" onclick="openAIModalForStrategy('${s.code}', '${cleanName.replace(/'/g, "\\'")}')"><td class="px-6 py-3"><div class="flex flex-col"><span class="font-bold text-white">${cleanName}</span></div></td><td class="px-6 py-3 text-right text-sm">RM ${s.price}</td><td class="px-6 py-3 text-right text-sm font-bold ${isUp?'text-up':'text-down'}">${isUp?'+':''}${s.rose}%</td><td class="px-6 py-3 text-center hidden sm:table-cell text-[9px] text-primary">${tag}</td></tr>`;
+                    });
+                    html += `</tbody></table>`;
+                });
+                container.innerHTML = html;
+            } catch (e) { container.innerHTML = `<div class="py-20 text-center">加載超時</div>`; }
+        }
+
+        function openAIModalForStrategy(c, n) { 
+            const tempId = 9000 + Math.floor(Math.random()*1000);
+            currentData.push({ id: tempId, code: c, name: n.replace(/\s*\[[Ss]\]/g, ''), signal: 'Neutral' });
+            openAIModal(tempId);
+        }
+
+        function switchTab(t) { 
+            document.getElementById('page-realtime').classList.toggle('hidden', t!=='realtime'); 
+            document.getElementById('page-quant').classList.toggle('hidden', t!=='quant'); 
+            document.getElementById('tab-realtime').className = t==='realtime'?'h-full px-2 tab-active':'h-full px-2 text-slate-400'; 
+            document.getElementById('tab-quant').className = t==='quant'?'h-full px-2 tab-active':'h-full px-2 text-slate-400'; 
+        }
+
+        async function generateMarketReview() {
+            const m = document.getElementById('reviewModal'); m.classList.remove('hidden');
+            const c = document.getElementById('reviewContent'); c.innerHTML = '<div class="py-20 text-center"><i class="fa-solid fa-brain fa-fade text-5xl text-indigo-500"></i></div>';
+            
+            let up=0, down=0, total=currentData.length;
+            currentData.forEach(s => { if(parseFloat(s.change)>0) up++; else if(parseFloat(s.change)<0) down++; });
+            
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            const timeStr = now.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            
+            const prompt = `時間：${dateStr} ${timeStr}。根據最新收盤數據，馬股上漲 ${up}，下跌 ${down}，總活躍股 ${total}。撰寫一份資深分析報告，包含市場情緒與策略。使用 Tailwind HTML 格式。注意：請直接輸出純 HTML 代碼，絕對不要包含任何開場白（如："這是一份..."）、結語或 markdown 標記。`;
+            
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
+                const json = await res.json();
+                let rawText = json.candidates?.[0]?.content?.parts?.[0]?.text || "無數據";
+                
+                const codeBlockRegex = new RegExp('\\x60\\x60\\x60(?:html)?\\s*([\\s\\S]*?)\\s*\\x60\\x60\\x60');
+                let htmlMatch = rawText.match(codeBlockRegex);
+                let aiHtml = htmlMatch ? htmlMatch[1] : rawText.replace(/\x60\x60\x60html/gi, '').replace(/\x60\x60\x60/g, '').trim();
+                
+                c.innerHTML = `<div class="mb-4 p-4 bg-dark rounded border border-slate-700 grid grid-cols-3 text-center"><div><div class="text-xs text-slate-500">上漲</div><div class="font-bold text-up">${up}</div></div><div><div class="text-xs text-slate-500">下跌</div><div class="font-bold text-down">${down}</div></div><div><div class="text-xs text-slate-500">廣度</div><div class="font-bold text-primary">${total ? ((up/total)*100).toFixed(1) : 0}%</div></div></div>${aiHtml}`;
+            } catch (e) { c.innerHTML = "AI 暫時離線。"; }
+        }
+
+        function renderTable() {
+            const tb = document.getElementById('stockTableBody');
+            tb.innerHTML = '';
+            displayData.slice(0, 100).forEach(stock => {
+                const c = parseFloat(stock.change);
+                tb.innerHTML += `<tr class="hover:bg-slate-800/80 transition-colors cursor-pointer text-sm" onclick="openAIModal(${stock.id})"><td class="py-3 px-4"><div class="flex flex-col"><span class="font-bold text-white">${stock.name}</span><span class="text-[10px] text-slate-500">${stock.code}</span></div></td><td class="py-3 px-4 text-right font-medium text-white">${stock.price}</td><td class="py-3 px-4 text-right font-bold ${c > 0 ? 'text-up' : (c < 0 ? 'text-down' : 'text-slate-300')}">${c > 0 ? '+' : ''}${stock.change}%</td><td class="py-3 px-4 text-center"><button class="bg-primary/10 text-primary border border-primary/30 px-3 py-1 rounded text-xs">分析</button></td></tr>`;
+            });
+            document.getElementById('stockCount').textContent = displayData.length;
+        }
+
+        function sortTable(c) { sortAsc = sortCol===c ? !sortAsc : true; sortCol=c; displayData.sort((a,b)=> { let va=parseFloat(a[c])||a[c], vb=parseFloat(b[c])||b[c]; return sortAsc ? (va>vb?1:-1) : (va<vb?1:-1); }); renderTable(); }
+        function applyFilters() { const sig = document.getElementById('signalFilter').value; displayData = currentData.filter(s => sig==='all' || s.signal===sig); renderTable(); }
+        function resetAllFilters() { document.getElementById('signalFilter').value='all'; applyFilters(); }
+        function debounceSearch() { 
+            const q = document.getElementById('globalSearch').value.toLowerCase();
+            displayData = currentData.filter(s => s.code.includes(q) || s.name.toLowerCase().includes(q));
+            renderTable();
+        }
+        function switchIndicator() { drawIndicator(document.getElementById('indicatorSelect').value); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); if(id==='aiModal') clearTimeout(typeWriterTimeout); }
+
+        window.onload = () => { syncFromKLSEScreener(); };
+    </script>
+</body>
+</html>
+
+
