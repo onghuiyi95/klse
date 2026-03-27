@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta content="width=device-width,initial-scale=1, maximum-scale=1, minimum-scale=1,user-scalable=no, minimal-ui" name="viewport">
+    <meta content="telephone=no" name="format-detection">
+    <title>弘历诊股 - 独立整合版</title>
+
+    <!-- 仅使用公共稳定 CDN 加载必须的基础库 (jQuery 和 ECharts) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+
+    <style type="text/css">
+        /* ================= 整合与重构的独立 CSS 样式 ================= */
+        * { font-family: "Microsoft YaHei", sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #f4f6f9; color: #333; }
+        
+        .wrap { margin: 70px auto 50px auto; max-width: 640px; background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); overflow: hidden; }
+        .clearfix::after { content: ""; display: block; clear: both; }
+
+        /* 头部行情卡片 */
+        .headprofile2 { background: #2c3e50; padding: 15px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+        .profileL2 { flex: 1; }
+        .profileL2 span { color: #f1c40f; }
+        .profileR { width: 120px; height: 80px; }
+
+        /* 导航 Tab */
+        .center { padding: 15px; }
+        .con_nav1 { display: flex; list-style: none; background: #ecf0f1; border-radius: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .con_nav1 li { flex: 1 1 33%; text-align: center; margin-bottom: 5px; }
+        /* 调整 padding 和字号以适应 6 个 Tab */
+        .con_nav1 li a { display: block; padding: 10px 2px; color: #7f8c8d; text-decoration: none; font-weight: bold; border-radius: 8px; transition: all 0.3s; font-size: 13px; }
+        .con_nav1 li.active a { background: #3498db; color: #fff; }
+
+        /* 内容区 */
+        .con_list { display: none; }
+        .con_list.show { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .market p.ynfx_zyz { display: flex; align-items: center; font-size: 16px; font-weight: bold; border-left: 4px solid #3498db; padding-left: 10px; margin-bottom: 15px; color: #2c3e50; }
+        .zjyna { background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 14px; line-height: 1.6; color: #555; }
+        .tutubox { width: 100%; height: 350px; margin: 15px 0; border: 1px solid #eee; border-radius: 8px; background: #fff; }
+
+        /* 概率条与进度 */
+        .wlsz_box { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 15px; }
+        .wlsz_all_title { font-weight: bold; margin-bottom: 10px; color: #2c3e50; }
+        .wlsz_all { display: flex; align-items: center; margin-bottom: 10px; font-size: 13px; }
+        .wlsz_all_left { width: 50px; font-weight: bold; }
+        .wlsz_all_right { flex: 1; display: flex; align-items: center; background: #e0e0e0; height: 18px; border-radius: 9px; overflow: hidden; position: relative; }
+        .wlsz_all_right_1 { flex: 1; height: 100%; }
+        .wlsz_all_right_2 { height: 100%; background: #e74c3c; transition: width 0.5s; }
+        .wlsz_all_right_01 { position: absolute; width: 100%; text-align: center; color: #fff; font-size: 12px; font-weight: bold; z-index: 2; line-height: 18px; }
+
+        .fonta2 { color: #666; font-size: 14px; line-height: 1.6; }
+
+        /* 六色罗盘特有样式 */
+        .compass-container { background: #fff; border-radius: 8px; padding: 15px; border: 1px solid #eee; margin-top: 15px; }
+        .compass-bg { background: #1e293b; border-radius: 8px; padding: 20px 0 0 0; position: relative; }
+        .compass-trapezoid { position: absolute; top: 15px; left: 15px; background: rgba(255,255,255,0.2); color: #fff; padding: 5px 15px; border-radius: 4px; font-weight: bold; font-size: 14px; z-index: 10; }
+        .compass-lsbar { display: flex; flex-wrap: wrap; justify-content: space-between; margin-top: 15px; }
+        .compass-lsbar-item { display: flex; align-items: center; width: 48%; margin-bottom: 10px; background: #f8f9fa; padding: 8px; border-radius: 6px; box-sizing: border-box; }
+        .compass-color-box { width: 16px; height: 16px; border-radius: 4px; margin-right: 10px; }
+        .compass-label { flex: 1; font-size: 13px; color: #333; font-weight: bold; }
+        .compass-risk { font-size: 12px; padding: 2px 6px; border-radius: 4px; color: #fff; font-weight: bold; text-align: center; }
+
+        .c-fc4407 { background-color: #fc4407; }
+        .c-fdc404 { background-color: #fdc404; }
+        .c-0042ff { background-color: #0042ff; }
+        .c-87cce7 { background-color: #87cce7; }
+        .c-c1f478 { background-color: #c1f478; }
+        .c-8feb8d { background-color: #8feb8d; }
+
+        .bg-fc4407 { background-color: #fc4407; color: #fff; }
+        .bg-fdc404 { background-color: #fdc404; color: #fff; }
+        .bg-0042ff { background-color: #0042ff; color: #fff; }
+        .bg-87cce7 { background-color: #87cce7; color: #fff; }
+        .bg-c1f478 { background-color: #c1f478; color: #333; }
+        .bg-8feb8d { background-color: #8feb8d; color: #333; }
+
+        /* 搜索栏与加载层 */
+        .search-bar {
+            position: fixed; top: 0; left: 0; width: 100%; background: #2c3e50; padding: 12px; box-sizing: border-box;
+            display: flex; justify-content: center; align-items: center; z-index: 99999; box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .search-bar input {
+            padding: 8px 15px; border-radius: 20px; border: none; outline: none; width: 60%; max-width: 300px; font-size: 16px;
+        }
+        .search-bar button {
+            padding: 8px 20px; margin-left: 10px; border-radius: 20px; border: none; background: #f1c40f; color: #2c3e50; font-weight: bold; font-size: 16px; cursor: pointer; transition: background 0.2s;
+        }
+        .search-bar button:active { background: #e6b800; }
+        .loading-mask {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); 
+            z-index: 99998; display: none; flex-direction: column; justify-content: center; align-items: center; font-size: 18px; font-weight: bold; color: #2c3e50;
+        }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body id="mybody">
+
+<div class="search-bar">
+    <input type="text" id="searchInput" placeholder="输入股票代码 (如 1818)" value="">
+    <button id="searchBtn">动态查询</button>
+</div>
+
+<div class="loading-mask" id="loadingMask">
+    <div class="spinner"></div>
+    <div id="loadingText">正在通过代理抓取并解析数据...</div>
+</div>
+
+<article class="wrap">
+    <div class="headprofile2 clearfix">
+        <div class="profileL2">
+            <div style="line-height: 1.8rem; font-size: 16px; margin-top: 5px;">
+                <span id="stkName">等待查询</span> &nbsp;<span style="color:#f1c40f;" id="stkCode">----</span>&nbsp; <span id="stkDate" style="font-size:12px; color:#bdc3c7;">--年--月--日</span>
+            </div>
+            <div style="height: 3rem; line-height: 3rem; font-weight:700; color: #2ecc71; margin-top: 10px; display: flex; gap: 15px;">
+                <div style="font-size: 28px;" id="stkPrice">--</div>
+                <div style="font-size: 16px; align-self: flex-end;" id="stkChange">--</div>
+                <div style="font-size: 16px; align-self: flex-end;" id="stkPct">--</div>
+            </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div id="valuationGauge" style="width: 110px; height: 90px; background: transparent;"></div>
+            <div class="profileR">
+                <div id="dpgz" style="width: 100%; height: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
+        <!-- 导航标签：包含8个Tab -->
+        <ul class="con_nav1">
+            <li class="active"><a href="javascript:;">技术指标</a></li>
+            <li><a href="javascript:;">资金流向</a></li>
+            <li><a href="javascript:;">股价波动</a></li>
+            <li><a href="javascript:;">六色罗盘</a></li>
+            <li><a href="javascript:;">AI预警</a></li>
+            <li><a href="javascript:;">AI金牛</a></li>
+            <li><a href="javascript:;">夺宝利剑</a></li>
+            <li><a href="javascript:;">AI预测</a></li>
+        </ul>
+
+        <div class="con_con">
+            <!-- 1. 技术指标 Tab -->
+            <div class="con_list show">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>核心技术指标分析</span></p>
+                    <div class="ynzs_zyz clearfix">
+                        <p class="zjyna" id="techText"><b>正在提取最新行情分析，请稍后...</b></p>
+                    </div>
+                    <p class="fonta2 mar9" id="techDesc1" style="margin-top: 15px;">等待数据加载...</p>
+                    <div class="tutubox" id="kline1"></div>
+                    <p class="fonta2 mar9" id="techDesc2">等待数据加载...</p>
+                    <div class="tutubox" id="liucai"></div>
+                    <p class="fonta2 mar9" id="chouma">等待数据加载...</p>
+                </div>
+            </div>
+
+            <!-- 2. 资金流向 Tab -->
+            <div class="con_list">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>资金流向分析</span></p>
+                    <div class="ynzs_zyz clearfix" style="display: flex; align-items: center; margin: 20px 0;">
+                        <div style="width: 100px; text-align: center; border: 1px solid #75a4f2; border-radius: 6px; overflow: hidden; flex-shrink: 0; box-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+                            <div style="background: #75a4f2; color: #fff; font-size: 13px; padding: 6px 0;">当日资金流向</div>
+                            <div id="fundFlowDir" style="color: #3498db; font-size: 18px; font-weight: bold; padding: 10px 0; background: #fff;">--</div>
+                        </div>
+                        <div class="zsl_right" style="flex: 1; margin-left: 15px; font-size: 14px; line-height: 1.6; color: #555;">
+                            <p class="zjyna" id="fundText" style="background: none; padding: 0; box-shadow: none;">等待数据加载...</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="fundCardsContainer">
+                    <div class="zjlx_box" style="margin-top: 20px;"></div>
+                    <div class="zjlx_box" style="margin-top: 20px;"></div>
+                    <div class="zjlx_box" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+
+            <!-- 3. 股价波动分析 Tab -->
+            <div class="con_list">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>股价波动预测与概率</span></p>
+                </div>
+                <div class="wlsz_box"><div class="wlsz_all_title" id="jrszgl">近日预测趋势</div><div id="main" style="width: 100%; height: 200px; margin: 15px 0;"></div></div>
+                <div class="wlsz_box">
+                    <div class="wlsz_all_title">未来涨跌概率</div>
+                    <div class="wlsz_all"><div class="wlsz_all_left">5日</div><div class="wlsz_all_right"><div id="day5_0" class="wlsz_all_right_01">--</div><div style="flex: 1; height: 100%;"><div id="day5" class="wlsz_all_right_2" style="width: 0%;"></div></div></div></div>
+                    <div class="wlsz_all"><div class="wlsz_all_left">13日</div><div class="wlsz_all_right"><div id="day13_0" class="wlsz_all_right_01">--</div><div style="flex: 1; height: 100%;"><div id="day13" class="wlsz_all_right_2" style="width: 0%;"></div></div></div></div>
+                    <div class="wlsz_all"><div class="wlsz_all_left">21日</div><div class="wlsz_all_right"><div id="day21_0" class="wlsz_all_right_01">--</div><div style="flex: 1; height: 100%;"><div id="day21" class="wlsz_all_right_2" style="width: 0%;"></div></div></div></div>
+                </div>
+                <div class="wlsz_box">
+                    <div class="wlsz_all_title">历史波动区间图</div>
+                    <div class="wlsz_all" style="margin-bottom: 15px;">
+                        <div class="wlsz_all_center" id="bdgl_1" style="width: 33%; text-align: center; font-weight: bold; font-size: 16px;"><span style="color: green">--%</span></div>
+                        <div class="wlsz_all_center" id="bdgl_2" style="width: 33%; text-align: center; font-weight: bold;">--</div>
+                        <div class="wlsz_all_center" id="bdgl_3" style="width: 33%; text-align: center; font-weight: bold;">--</div>
+                    </div>
+                    <div class="wlsz_all" style="margin-bottom: 15px;">
+                        <div class="wlsz_all_center" id="bdgl_4" style="width: 33%; text-align: center;"><span style="color: green">上涨概率</span></div>
+                        <div class="wlsz_all_center" style="width: 33%; text-align: center; color: #888;">预测高点</div>
+                        <div class="wlsz_all_center" style="width: 33%; text-align: center; color: #888;">预测低点</div>
+                    </div>
+                    <div id="bdqjKine" style="width: 100%; height: 350px;"></div>
+                </div>
+            </div>
+
+            <!-- 4. 六色罗盘 Tab -->
+            <div class="con_list">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>六色罗盘分析</span></p>
+                    <div class="zjyna">
+                        <p style="margin: 0;">根据超级云脑六色罗盘的全方位检测结果，该股当前处于 <strong id="compassStatus" style="color:#e74c3c;">--</strong>， 安全级别为 <strong id="compassLevel" style="color:#e74c3c;">--</strong>。</p>
+                    </div>
+                    
+                    <div class="compass-container">
+                        <div class="compass-bg">
+                            <div class="compass-trapezoid" id="compassStockName">等待查询</div>
+                            <div id="sixColorChart" style="width: 100%; height: 220px;"></div>
+                        </div>
+                        
+                        <div class="compass-lsbar">
+                            <div class="compass-lsbar-item"><div class="compass-color-box c-fc4407"></div><div class="compass-label">弱撑强压区</div><div class="compass-risk bg-fc4407">极高风险</div></div>
+                            <div class="compass-lsbar-item"><div class="compass-color-box c-fdc404"></div><div class="compass-label">弱撑中压区</div><div class="compass-risk bg-fdc404">较高风险</div></div>
+                            <div class="compass-lsbar-item"><div class="compass-color-box c-0042ff"></div><div class="compass-label">弱撑弱压区</div><div class="compass-risk bg-0042ff">中等风险</div></div>
+                            <div class="compass-lsbar-item"><div class="compass-color-box c-87cce7"></div><div class="compass-label">强撑强压区</div><div class="compass-risk bg-87cce7">一般安全</div></div>
+                            <div class="compass-lsbar-item"><div class="compass-color-box c-c1f478"></div><div class="compass-label">强撑中压区</div><div class="compass-risk bg-c1f478">较为安全</div></div>
+                            <div class="compass-lsbar-item"><div class="compass-color-box c-8feb8d"></div><div class="compass-label">强撑弱压区</div><div class="compass-risk bg-8feb8d">非常安全</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. AI预警模型 Tab -->
+            <div class="con_list">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>50结构 (顶底拐点)</span></p>
+                    <div class="tutubox" id="chart50"></div>
+                    <p class="fonta2 mar9">利用数字序列精准提示股价短期的顶部或底部拐点，辅助左侧交易布局。</p>
+                </div>
+
+                <div class="market" style="margin-top: 25px;">
+                    <p class="ynfx_zyz"><span>AI 雷达 (天轨地轨)</span></p>
+                    <div class="tutubox" id="chartRadar"></div>
+                    <p class="fonta2 mar9">通过蓝色的“天轨”与黄色的“地轨”构建波动通道，捕捉异常突破与回踩信号。</p>
+                </div>
+            </div>
+
+            <!-- 6. 新增：AI金牛 Tab -->
+            <div class="con_list">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>AI金牛 (趨勢信號與防線)</span></p>
+                    <div class="tutubox" id="goldCowMain" style="height: 380px;"></div>
+                    <p class="fonta2 mar9"><strong>四色K線</strong>：紅(強勢) / 橙(震盪) / 藍(弱勢) / 青(尋底)<br/><strong>生命防線</strong>：紅(多頭) / 綠(空頭) / 黃(預警)</p>
+                </div>
+
+                <div class="market" style="margin-top: 25px;">
+                    <p class="ynfx_zyz"><span>多維資金流向 (高階版)</span></p>
+                    <div class="tutubox" id="goldCowFund" style="height: 250px;"></div>
+                    <p class="fonta2 mar9">自動識別大中小單結構，四色柱體提示主力資金力度，並附帶頂底異動圖標預警。</p>
+                </div>
+
+                <div class="market" style="margin-top: 25px;">
+                    <p class="ynfx_zyz"><span>動態牛熊指標 (DNC)</span></p>
+                    <div class="tutubox" id="goldCowDNC" style="height: 250px;"></div>
+                    <p class="fonta2 mar9">五彩背景帶動態區分超買與超賣區，頂底方塊及時提示行情極值反轉。</p>
+                </div>
+            </div>
+            
+            <!-- 7. 新增：夺宝利剑 Tab -->
+            <div class="con_list">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>飞天通道 (多空趋势)</span></p>
+                    <div class="tutubox" id="swordMain" style="height: 380px;"></div>
+                    <p class="fonta2 mar9"><strong>飞线(绿)</strong> / <strong>中线(红)</strong> / <strong>天线(黄)</strong> / <strong>流线(青)</strong>。四线合一构成趋势彩带，辨别股价运行通道。</p>
+                </div>
+                <div class="market" style="margin-top: 25px;">
+                    <p class="ynfx_zyz"><span>波段量能 (起爆点分析)</span></p>
+                    <div class="tutubox" id="swordVolume" style="height: 250px;"></div>
+                    <p class="fonta2 mar9">监控底层筹码与异动量能，通过买盘堆叠与趋势线交织，寻找资金拐点与起爆点。</p>
+                </div>
+            </div>
+
+            <!-- 8. 新增：AI预测大模型 Tab (完全内联样式，绝对隔离防冲突) -->
+            <div class="con_list">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>AI 预测大模型 (时空预测)</span></p>
+                    
+                    <div style="background: linear-gradient(180deg, #020b22 0%, #071945 50%, #020b22 100%); border-radius: 12px; padding: 30px 15px; position: relative; margin-top: 15px; color: #fff; overflow: hidden; min-height: 280px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);">
+                        
+                        <!-- 日期与现价 -->
+                        <div style="display: flex; justify-content: center; align-items: center; position: relative; z-index: 10; margin-bottom: 25px;">
+                            <div style="background: #18397a; border: 1px solid rgba(6, 182, 212, 0.5); border-radius: 999px; padding: 6px 24px; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3); text-align: center;">
+                                <span style="color: #d1d5db; font-size: 13px;">
+                                    <span id="ui-ai-date">----/--/--</span> &nbsp;|&nbsp; 现价: <span id="ui-ai-now" style="color: #fff; font-weight: bold; font-family: monospace; font-size: 16px; margin-left: 4px;">---</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- 两列布局：左侧 -->
+                        <div style="display: flex; justify-content: space-between; position: relative; z-index: 10;">
+                            <div style="display: flex; flex-direction: column; gap: 20px; width: 38%;">
+                                <!-- 卖出价 -->
+                                <div style="background: linear-gradient(180deg, rgba(16, 42, 94, 0.9) 0%, rgba(8, 20, 50, 0.9) 100%); border: 1px solid #ef4444; border-radius: 6px; padding: 8px; text-align: center; box-shadow: inset 0 0 8px rgba(239, 68, 68, 0.3);">
+                                    <div style="color: #fca5a5; font-size: 12px; margin-bottom: 4px;">卖出价</div>
+                                    <div id="ui-ai-sell" style="color: #fff; font-family: monospace; font-size: 18px; font-weight: bold;">---</div>
+                                </div>
+                                <!-- 预测低一 -->
+                                <div style="background: linear-gradient(180deg, rgba(16, 42, 94, 0.9) 0%, rgba(8, 20, 50, 0.9) 100%); border: 1px solid #06b6d4; border-radius: 6px; padding: 8px; text-align: center; box-shadow: inset 0 0 8px rgba(6, 182, 212, 0.3);">
+                                    <div style="color: #67e8f9; font-size: 12px; margin-bottom: 4px;">预测低一</div>
+                                    <div id="ui-ai-low1" style="color: #fff; font-family: monospace; font-size: 18px; font-weight: bold;">---</div>
+                                </div>
+                                <!-- 预测高一 -->
+                                <div style="background: linear-gradient(180deg, rgba(16, 42, 94, 0.9) 0%, rgba(8, 20, 50, 0.9) 100%); border: 1px solid #22c55e; border-radius: 6px; padding: 8px; text-align: center; box-shadow: inset 0 0 8px rgba(34, 197, 94, 0.3);">
+                                    <div style="color: #4ade80; font-size: 12px; margin-bottom: 4px;">预测高一</div>
+                                    <div id="ui-ai-h1" style="color: #fff; font-family: monospace; font-size: 18px; font-weight: bold;">---</div>
+                                </div>
+                            </div>
+
+                            <!-- 右侧 -->
+                            <div style="display: flex; flex-direction: column; gap: 20px; width: 38%;">
+                                <!-- 买回价 -->
+                                <div style="background: linear-gradient(180deg, rgba(16, 42, 94, 0.9) 0%, rgba(8, 20, 50, 0.9) 100%); border: 1px solid #eab308; border-radius: 6px; padding: 8px; text-align: center; box-shadow: inset 0 0 8px rgba(234, 179, 8, 0.3);">
+                                    <div style="color: #facc15; font-size: 12px; margin-bottom: 4px;">买回价</div>
+                                    <div id="ui-ai-buy" style="color: #fff; font-family: monospace; font-size: 18px; font-weight: bold;">---</div>
+                                </div>
+                                <!-- 预测低二 -->
+                                <div style="background: linear-gradient(180deg, rgba(16, 42, 94, 0.9) 0%, rgba(8, 20, 50, 0.9) 100%); border: 1px solid #06b6d4; border-radius: 6px; padding: 8px; text-align: center; box-shadow: inset 0 0 8px rgba(6, 182, 212, 0.3);">
+                                    <div style="color: #67e8f9; font-size: 12px; margin-bottom: 4px;">预测低二</div>
+                                    <div id="ui-ai-low2" style="color: #fff; font-family: monospace; font-size: 18px; font-weight: bold;">---</div>
+                                </div>
+                                <!-- 预测高二 -->
+                                <div style="background: linear-gradient(180deg, rgba(16, 42, 94, 0.9) 0%, rgba(8, 20, 50, 0.9) 100%); border: 1px solid #22c55e; border-radius: 6px; padding: 8px; text-align: center; box-shadow: inset 0 0 8px rgba(34, 197, 94, 0.3);">
+                                    <div style="color: #4ade80; font-size: 12px; margin-bottom: 4px;">预测高二</div>
+                                    <div id="ui-ai-h2" style="color: #fff; font-family: monospace; font-size: 18px; font-weight: bold;">---</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 居中发光球体 -->
+                        <div style="position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5;">
+                            <div style="position: absolute; width: 120px; height: 120px; border-radius: 50%; background: rgba(59, 130, 246, 0.2); filter: blur(10px); z-index: -1;"></div>
+                            <div style="width: 100px; height: 100px; border-radius: 50%; border: 2px dashed #22d3ee; animation: ai-spin 10s linear infinite;"></div>
+                            <div style="position: absolute; text-align: center; z-index: 10;">
+                                <div style="font-size: 24px; font-weight: bold; color: #93c5fd; margin-bottom: 2px;">AI</div>
+                                <div style="font-size: 12px; color: #22d3ee; font-weight: bold; letter-spacing: 2px; white-space: nowrap;">预测大模型</div>
+                            </div>
+                        </div>
+                        <style>@keyframes ai-spin { 100% { transform: rotate(360deg); } }</style>
+                    </div>
+                    
+                    <p class="fonta2 mar9" style="margin-top: 15px;">利用云端超级计算，结合时空共振算法，为您精准预判未来短期的高低点及操作价格区间。</p>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</article>
+
+<script type="text/javascript">
+    const PROXY_URL = 'https://script.google.com/macros/s/AKfycbwNxtWwgZhGV7giqEViIsZzELNFyqviC42xDqw_zS4xqhG5UFHt-izvKvsQxubDIAwMpw/exec?url=';
+
+    $(function(){
+        // 1. 绑定 Tab 切换
+        $(".con_nav1 li").click(function(){
+            var index = $(this).index();
+            $(this).addClass('active').siblings().removeClass("active");
+            $(".con_list").eq(index).addClass('show').siblings().removeClass("show");
+            
+            setTimeout(function() {
+                if(window.echarts) {
+                    ['valuationGauge', 'kline1', 'liucai', 'main', 'bdqjKine', 'sixColorChart', 'chart50', 'chartRadar', 'goldCowMain', 'goldCowFund', 'goldCowDNC', 'swordMain', 'swordVolume'].forEach(id => {
+                        let dom = document.getElementById(id);
+                        if(dom) {
+                            let inst = echarts.getInstanceByDom(dom);
+                            if(inst) inst.resize();
+                        }
+                    });
+                }
+            }, 100);
+        });
+
+        // 2. 绑定查询按钮
+        $("#searchBtn").click(triggerFetch);
+        $("#searchInput").keypress(function(e) { if(e.which == 13) triggerFetch(); });
+
+        // 初始化默认执行一次
+        triggerFetch();
+    });
+
+    function triggerFetch() {
+        const code = $('#searchInput').val().trim();
+        let targetUrl = `https://hcm.rzfwq.com/hwhcnewB/l_yzg1.zg?device=5&market=my&language=cn`;
+        if (code) {
+            targetUrl = `https://hcm.rzfwq.com/hwhcnewB/l_yzg1.zg?code=${code}&device=5&market=my&language=cn`;
+        }
+        
+        const displayCode = code || '默认行情';
+
+        $('#loadingMask').css('display', 'flex');
+        $('#loadingText').text(`正在拉取 ${displayCode} 的网页源码...`);
+
+        fetch(PROXY_URL + encodeURIComponent(targetUrl))
+            .then(res => res.text())
+            .then(htmlStr => {
+                $('#loadingText').text('解析并提取核心数据...');
+                
+                if (htmlStr.trim().startsWith('{')) {
+                    try {
+                        const jsonObj = JSON.parse(htmlStr);
+                        if (jsonObj.contents) htmlStr = jsonObj.contents;
+                    } catch(e) {}
+                }
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlStr, 'text/html');
+
+                $('#techText').html(doc.querySelector('.zjyna')?.innerHTML || "无分析数据");
+                $('#techDesc1').html(doc.querySelectorAll('.fonta2')[0]?.innerHTML || "");
+                $('#techDesc2').html(doc.querySelectorAll('.fonta2')[1]?.innerHTML || "");
+                $('#chouma').html(doc.getElementById('chouma')?.innerHTML || "");
+                
+                const flowSpan = doc.querySelector('.sus_leadzhengu span');
+                if (flowSpan) $('#fundFlowDir').text(flowSpan.innerText);
+                const zjynaEls = doc.querySelectorAll('.zjyna');
+                if (zjynaEls.length > 1) $('#fundText').html(zjynaEls[1].innerHTML);
+                
+                const sourceBoxes = doc.querySelectorAll('.zjlx_box');
+                const targetBoxes = document.querySelectorAll('#fundCardsContainer .zjlx_box');
+                sourceBoxes.forEach((box, idx) => {
+                    if (targetBoxes[idx]) targetBoxes[idx].innerHTML = box.innerHTML;
+                });
+
+                let ylNum = NaN, zcNum = NaN;
+                const textContentAll = doc.body ? doc.body.textContent : htmlStr;
+                const pMatch = textContentAll.match(/压力位(?:为|是)?\s*[:：]?\s*(\d+(?:\.\d+)?)/);
+                const sMatch = textContentAll.match(/支撑位(?:为|是)?\s*[:：]?\s*(\d+(?:\.\d+)?)/);
+                if (pMatch) ylNum = parseFloat(pMatch[1]);
+                if (sMatch) zcNum = parseFloat(sMatch[1]);
+
+                let valuationNum = 20; 
+                const vMatches = htmlStr.match(/DrawDPZZZZ\(['"](\d+(?:\.\d+)?)['"]\)/g);
+                if (vMatches && vMatches.length > 0) {
+                    const lastMatch = vMatches[vMatches.length - 1].match(/\d+(?:\.\d+)?/);
+                    if (lastMatch) {
+                        valuationNum = parseFloat(lastMatch[0]);
+                    }
+                }
+
+                let dataStr = '';
+                let dataDayStr = '';
+                const scripts = doc.querySelectorAll('script');
+                scripts.forEach(s => {
+                    const txt = s.textContent;
+                    let dIdx = txt.indexOf("var data = '");
+                    if (dIdx !== -1) {
+                        let start = dIdx + 12;
+                        let end = txt.indexOf("';", start);
+                        if (end > start) dataStr = txt.substring(start, end);
+                    }
+
+                    let dayIdx = txt.indexOf("var dataDay = '");
+                    if (dayIdx !== -1) {
+                        let start = dayIdx + 15;
+                        let end = txt.indexOf("';", start);
+                        if (end > start) dataDayStr = txt.substring(start, end);
+                    }
+                });
+
+                if (dataStr) {
+                    try {
+                        let parsed = JSON.parse(dataStr);
+                        
+                        let extractedName = $('#techText').text().match(/([A-Z0-9\s]+)\(/);
+                        if (extractedName && extractedName[1]) {
+                            $('#stkName').text(extractedName[1].trim());
+                        } else {
+                            $('#stkName').text(displayCode);
+                        }
+                        
+                        $('#stkCode').text(code || '--');
+                        
+                        if (parsed.KLine20 && parsed.KLine20.length > 0) {
+                            let lastDay = parsed.KLine20[parsed.KLine20.length - 1];
+                            let prevDay = parsed.KLine20[parsed.KLine20.length - 2];
+                            $('#stkDate').text(lastDay[0]);
+                            
+                            let price = lastDay[2]; 
+                            let prevPrice = prevDay ? prevDay[2] : price;
+                            let change = price - prevPrice;
+                            let pct = (change / prevPrice) * 100;
+                            
+                            $('#stkPrice').text(price.toFixed(3));
+                            $('#stkChange').text((change > 0 ? "+" : "") + change.toFixed(3));
+                            $('#stkPct').text((pct > 0 ? "+" : "") + pct.toFixed(2) + "%");
+                            
+                            let color = change >= 0 ? "#e74c3c" : "#2ecc71";
+                            $('#stkPrice, #stkChange, #stkPct').css("color", color);
+
+                            // 同步更新 AI 预测大模型的时间和现价
+                            $('#ui-ai-date').text(lastDay[0]);
+                            $('#ui-ai-now').text(price.toFixed(3));
+                        }
+                        
+                        drawAllCharts(parsed, ylNum, zcNum, valuationNum);
+                        
+                    } catch(e) { console.error("图表 JSON 解析失败:", e); }
+                }
+
+                if (dataDayStr) {
+                    try {
+                        let objDay = JSON.parse(dataDayStr);
+                        setupProbability(objDay);
+                    } catch(e) {}
+                }
+                
+                $('#loadingMask').hide();
+            })
+            .catch(err => {
+                console.error("抓取失败:", err);
+                $('#loadingText').html(`<span style="color:#e74c3c">抓取失败: ${err.message}</span><br><span style="font-size:14px">请稍后再试或检查代码</span>`);
+                setTimeout(() => { $('#loadingMask').hide(); }, 2000);
+            });
+
+        // 2. 独立抓取 GGYC AI 预测大模型数据
+        const ggycToken = "9H8rtFRVgUPIboGxpxrnbZi0+fEeMx8pywnIlrmTxY9NbPN5lz+BC+9t9JQuIXc4eYlZafevxowsEfry7ck";
+        fetch("https://api.homilychart.com/link/api/home/indexData", {
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json', 'token': ggycToken },
+            body: JSON.stringify({ market: "my", code: code || "", language: "cn", marketList: "" })
+        })
+        .then(res => res.json())
+        .then(dataMain => {
+            if (dataMain.code === 200 && dataMain.data && dataMain.data.GGYC) {
+                let ggyc = dataMain.data.GGYC;
+                $('#ui-ai-sell').text(ggyc.sell || '---');
+                $('#ui-ai-buy').text(ggyc.buy || '---');
+                $('#ui-ai-low1').text(ggyc.low1 || '---');
+                $('#ui-ai-low2').text(ggyc.low2 || '---');
+                $('#ui-ai-h1').text(ggyc.h1 || '---');
+                $('#ui-ai-h2').text(ggyc.h2 || '---');
+            } else {
+                $('#ui-ai-sell, #ui-ai-buy, #ui-ai-low1, #ui-ai-low2, #ui-ai-h1, #ui-ai-h2').text('---');
+            }
+        })
+        .catch(err => {
+            console.error("GGYC API Error:", err);
+            $('#ui-ai-sell, #ui-ai-buy, #ui-ai-low1, #ui-ai-low2, #ui-ai-h1, #ui-ai-h2').text('---');
+        });
+    }
+
+    function renderChartSafely(domId, renderLogic) {
+        let dom = document.getElementById(domId);
+        if(!dom || !window.echarts) return;
+        try {
+            let oldInst = echarts.getInstanceByDom(dom);
+            if(oldInst) oldInst.dispose();
+            
+            let chart = echarts.init(dom);
+            renderLogic(chart);
+        } catch(e) {
+            console.error(`绘制图表 [${domId}] 失败:`, e);
+        }
+    }
+
+    function gggl(sl, up, dpwn){
+        $("#bdgl_2").html(up);
+        $("#bdgl_3").html(dpwn);
+        if(sl > 0){
+            $("#bdgl_1").html("<span style=\"color: green\">" + sl + "%</span>");
+            $("#bdgl_4").html("<span style=\"color: green\">上涨概率</span>");
+        }else{
+            $("#bdgl_1").html("<span style=\"color: red\">" + (0-sl) + "%</span>");
+            $("#bdgl_4").html("<span style=\"color: red\">下跌概率</span>");
+        }
+    }
+
+    function drawAllCharts(obj, ylNum, zcNum, valuationNum) {
+        if(!obj) return;
+
+        renderChartSafely('valuationGauge', (chart) => {
+            let val = valuationNum || 0; 
+            let color = '#90ed7d'; 
+            if (val > 33 && val <= 66) color = '#87ceeb';
+            else if (val > 66) color = '#ff471a';
+
+            chart.setOption({
+                series: [{
+                    type: 'gauge', startAngle: 180, endAngle: 0, center: ['50%', '70%'], radius: '100%', min: 0, max: 100, splitNumber: 3,
+                    axisLine: { lineStyle: { width: 15, color: [ [0.333, '#90ed7d'], [0.666, '#87ceeb'], [1, '#ff471a'] ] } },
+                    pointer: { length: '65%', width: 4, itemStyle: { color: color } },
+                    axisTick: { show: true, splitNumber: 4, length: 15, distance: -15, lineStyle: { color: '#fff', width: 2 } },
+                    splitLine: { show: true, length: 15, distance: -15, lineStyle: { color: '#fff', width: 3 } },
+                    axisLabel: { show: false }, title: { show: false },
+                    detail: { formatter: '个股估值: {value}', offsetCenter: [0, '30%'], fontSize: 12, color: color, fontWeight: 'bold' },
+                    data: [{ value: val }]
+                }]
+            });
+        });
+
+        if(obj.KLine20) {
+            renderChartSafely('dpgz', (chart) => {
+                let dData = obj.KLine20.map(item => item[2]);
+                chart.setOption({
+                    grid: { top: 5, bottom: 5, left: 5, right: 5 },
+                    xAxis: { type: 'category', show: false, data: obj.KLine20.map(item=>item[0]) },
+                    yAxis: { type: 'value', show: false, scale: true },
+                    series: [{ type: 'line', data: dData, smooth: true, itemStyle: { color: '#f1c40f' }, lineStyle: { width: 2 }, symbol: 'none' }]
+                });
+            });
+        }
+
+        if(obj.KLine20) {
+            renderChartSafely('kline1', (chart) => {
+                let dates = obj.KLine20.map(item => item[0]);
+                let values = obj.KLine20.map(item => [item[1], item[2], item[3], item[4]]);
+                let ma5 = obj.KLine20.map(item => item[5] || item[2]); 
+
+                let yl = obj.QXSBQ && !isNaN(parseFloat(obj.QXSBQ.yl)) ? parseFloat(obj.QXSBQ.yl) : ylNum;
+                let zc = obj.QXSBQ && !isNaN(parseFloat(obj.QXSBQ.zc)) ? parseFloat(obj.QXSBQ.zc) : zcNum;
+
+                let markLineOpt = { symbol: ['none', 'none'], data: [] };
+                if (!isNaN(yl)) {
+                    markLineOpt.data.push({
+                        yAxis: yl, lineStyle: { color: '#c0392b', type: 'dashed', width: 2 },
+                        label: { formatter: '压力位 {c}', position: 'insideStartTop', color: '#c0392b', fontSize: 12 }
+                    });
+                }
+                if (!isNaN(zc)) {
+                    markLineOpt.data.push({
+                        yAxis: zc, lineStyle: { color: '#27ae60', type: 'dashed', width: 2 },
+                        label: { formatter: '支撑位 {c}', position: 'insideStartBottom', color: '#27ae60', fontSize: 12 }
+                    });
+                }
+
+                chart.setOption({
+                    title: { text: '近期 K线与均线走势', left: 'center', textStyle: { fontSize: 14 } },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+                    grid: { left: '12%', right: '5%', bottom: '15%', top: '15%' },
+                    xAxis: { type: 'category', data: dates, scale: true },
+                    yAxis: { scale: true },
+                    series: [
+                        { name: 'K线', type: 'candlestick', data: values, itemStyle: { color: '#0CF49B', color0: '#FD1050', borderColor: '#0CF49B', borderColor0: '#FD1050' }, markLine: markLineOpt.data.length > 0 ? markLineOpt : undefined },
+                        { name: '均线', type: 'line', data: ma5, smooth: true, symbol: 'none', lineStyle: { color: '#f1c40f', width: 2 } }
+                    ]
+                });
+            });
+        }
+
+        if(obj.KLine20) {
+            renderChartSafely('bdqjKine', (chart) => {
+                let categoryData = [];
+                let values = [];
+                let kData = JSON.parse(JSON.stringify(obj.KLine20)); 
+                for (let i = 0; i < kData.length; i++) {
+                    categoryData.push(kData[i].splice(0, 1)[0]);
+                    values.push(kData[i]);
+                }
+                
+                let calculateOne = (index) => {
+                    let result = [];
+                    for (let i = 0; i < values.length; i++) result.push(values[i][index]);
+                    return result;
+                };
+
+                chart.setOption({
+                    grid: { x: 45, y: 15, y2: 25, right: '5%' },
+                    tooltip: {
+                        trigger: "axis",
+                        padding: 0,
+                        backgroundColor: "rgba(0, 0, 0, 0.7)",
+                        textStyle: { color: '#fff' },
+                        formatter: function(params) {
+                            var gl = parseFloat(params[0].data[6] * 100).toFixed(2);
+                            var isUp = gl >= 0;
+                            var colorText = isUp ? "#0CF49B" : "#FD1050";
+                            var probText = isUp ? "上涨概率" : "下跌概率";
+                            var absGl = Math.abs(gl);
+                            
+                            var res = `<div style="padding:10px; color:${colorText}">最高：${params[0].data[5]}<br/>${probText}：${absGl}%</div>` + 
+                                      `<div style="padding:10px; border-top:1px solid #555; color:#2D8FFD">最低：${params[0].data[7]}<br/>${params[0].name}</div>`;
+                            
+                            gggl(gl, params[0].data[5], params[0].data[7]);
+                            return res;
+                        },
+                        axisPointer: { type: "line" }
+                    },
+                    xAxis: { type: "category", data: categoryData, axisLine: { lineStyle: { color: "#8392A5" } } },
+                    yAxis: { scale: true, axisLine: { lineStyle: { color: "#8392A5" } }, splitLine: { show: false } },
+                    series: [
+                        { type: "candlestick", name: "日K", data: values, itemStyle: { color: "#0CF49B", color0: "#FD1050", borderColor: "#0CF49B", borderColor0: "#FD1050" } },
+                        { name: "high", type: "line", data: calculateOne(6), smooth: false, itemStyle: { color: "#2D8FFD" }, lineStyle: { color: "#2D8FFD", width: 2 } },
+                        { name: "low", type: "line", data: calculateOne(4), smooth: false, itemStyle: { color: "#F50FEE" }, lineStyle: { color: "#F50FEE", width: 2 } }
+                    ]
+                });
+            });
+        }
+
+        if(obj.SixColorDragon20) {
+            renderChartSafely('liucai', (chart) => {
+                let dates = obj.SixColorDragon20.map(item => item[0]);
+                let barYellow = obj.SixColorDragon20.map(item => item[1]); // 浮动盘 (黄)
+                let barRed = obj.SixColorDragon20.map(item => item[2]);    // 获利盘 (红)
+                let barGreen = obj.SixColorDragon20.map(item => item[3]);  // 套牢盘 (绿)
+                let line1 = obj.SixColorDragon20.map(item => item[4]); // 趋势线 1 (紫)
+                let line2 = obj.SixColorDragon20.map(item => item[5]); // 趋势线 2 (青)
+                let line3 = obj.SixColorDragon20.map(item => item[6]); // 趋势线 3 (黄)
+
+                chart.setOption({
+                    title: { text: '六彩神龙 (筹码分布)', left: 'center', textStyle: { fontSize: 14 } },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                    legend: { data: ['获利盘', '浮动盘', '套牢盘'], bottom: 0, textStyle: { fontSize: 11 } },
+                    grid: { left: '12%', right: '5%', bottom: '20%', top: '15%' },
+                    xAxis: { type: 'category', data: dates },
+                    yAxis: { type: 'value', max: 100 }, 
+                    series: [
+                        { name: '获利盘', type: 'bar', stack: 'total', data: barRed, itemStyle: { color: '#e74c3c' }, barWidth: '60%' },
+                        { name: '浮动盘', type: 'bar', stack: 'total', data: barYellow, itemStyle: { color: '#ffff00' }, barWidth: '60%' },
+                        { name: '套牢盘', type: 'bar', stack: 'total', data: barGreen, itemStyle: { color: '#2ecc71' }, barWidth: '60%' },
+                        { name: '趋势1', type: 'line', data: line1, itemStyle: { color: '#9b59b6' }, symbol: 'none', smooth: true, lineStyle: { width: 1.5 } },
+                        { name: '趋势2', type: 'line', data: line2, itemStyle: { color: '#3498db' }, symbol: 'none', smooth: true, lineStyle: { width: 1.5 } },
+                        { name: '趋势3', type: 'line', data: line3, itemStyle: { color: '#e67e22' }, symbol: 'none', smooth: true, lineStyle: { width: 1.5 } }
+                    ]
+                });
+            });
+        }
+
+        renderChartSafely('sixColorChart', (chart) => {
+            let yl = "一般", zc = "一般";
+            if (obj.YaLiZhiChengLuoPan) {
+                yl = obj.YaLiZhiChengLuoPan.Yali || "一般";
+                zc = obj.YaLiZhiChengLuoPan.ZhiCheng || "一般";
+            }
+
+            let status = "弱撑弱压区", level = "中等风险", color = "#0042ff", pointerVal = 2.5;
+            if(yl=="较大" && zc=="较弱"){ status="弱撑强压区"; level="极高风险"; color="#fc4407"; pointerVal = 0.5; }
+            else if(yl=="一般" && zc=="较弱"){ status="弱撑中压区"; level="较高风险"; color="#fdc404"; pointerVal = 1.5; }
+            else if(yl=="较弱" && zc=="较弱"){ status="弱撑弱压区"; level="中等风险"; color="#0042ff"; pointerVal = 2.5; }
+            else if(yl=="较大" && zc=="较大"){ status="强撑强压区"; level="一般安全"; color="#87cce7"; pointerVal = 3.5; }
+            else if(yl=="一般" && zc=="较大"){ status="强撑中压区"; level="较为安全"; color="#c1f478"; pointerVal = 4.5; }
+            else if(yl=="较弱" && zc=="较大"){ status="强撑弱压区"; level="非常安全"; color="#8feb8d"; pointerVal = 5.5; }
+            else if(yl=="较大" && zc=="一般"){ status="弱撑强压区"; level="极高风险"; color="#fc4407"; pointerVal = 0.5; }
+            else if(yl=="一般" && zc=="一般"){ status="弱撑弱压区"; level="中等风险"; color="#0042ff"; pointerVal = 2.5; }
+            else if(yl=="较弱" && zc=="一般"){ status="强撑弱压区"; level="非常安全"; color="#8feb8d"; pointerVal = 5.5; }
+
+            $('#compassStatus').text(status).css('color', color);
+            $('#compassLevel').text(level).css('color', color);
+            $('#compassStockName').text($('#stkName').text() + ' ' + $('#stkCode').text());
+
+            chart.setOption({
+                series: [{
+                    name: "六色罗盘",
+                    type: "gauge",
+                    center: ["50%", "55%"],
+                    radius: "90%",
+                    startAngle: 180,
+                    endAngle: 0,
+                    min: 0,
+                    max: 6,
+                    splitNumber: 6,
+                    axisLine: {
+                        lineStyle: {
+                            width: 30,
+                            color: [ [0.166, "#FC4407"], [0.333, "#FDC404"], [0.5, "#0042FF"], [0.666, "#87CCE7"], [0.833, "#C1F478"], [1, "#8FEB8D"] ]
+                        }
+                    },
+                    axisTick: { show: false },
+                    splitLine: { show: true, length: 30, lineStyle: { color: '#fff', width: 2 } },
+                    axisLabel: { show: false },
+                    pointer: { length: '70%', width: 6, itemStyle: { color: color } },
+                    detail: { show: false },
+                    data: [{ value: pointerVal }]
+                }]
+            });
+        });
+
+        if(obj.KLine20 && obj.FIVEJG) {
+            renderChartSafely('chart50', (chart) => {
+                let dates = obj.KLine20.map(item => item[0]);
+                let values = obj.KLine20.map(item => [item[1], item[2], item[3], item[4]]);
+                
+                let markPointData = [];
+                obj.FIVEJG.forEach((item) => {
+                    let date = item[0], bottomMark = item[1], topMark = item[2];
+                    let kItem = obj.KLine20.find(k => k[0] === date);
+                    if(!kItem) return;
+
+                    if (bottomMark > 0) {
+                        markPointData.push({
+                            coord: [date, kItem[3]],
+                            value: bottomMark, symbol: 'circle', symbolSize: 1,
+                            label: { show: true, position: 'bottom', color: '#2ecc71', fontSize: 16, fontWeight: 'bold' }
+                        });
+                    }
+                    if (topMark > 0) {
+                        markPointData.push({
+                            coord: [date, kItem[4]],
+                            value: topMark, symbol: 'circle', symbolSize: 1,
+                            label: { show: true, position: 'top', color: '#e74c3c', fontSize: 16, fontWeight: 'bold' }
+                        });
+                    }
+                });
+
+                chart.setOption({
+                    title: { text: '50结构 (顶底拐点)', left: 'center', textStyle: { fontSize: 14 } },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+                    grid: { left: '12%', right: '5%', bottom: '15%', top: '15%' },
+                    xAxis: { type: 'category', data: dates, scale: true },
+                    yAxis: { scale: true },
+                    series: [{
+                        name: 'K线', type: 'candlestick', data: values,
+                        itemStyle: { color: '#0CF49B', color0: '#FD1050', borderColor: '#0CF49B', borderColor0: '#FD1050' },
+                        markPoint: { data: markPointData, silent: true }
+                    }]
+                });
+            });
+        }
+
+        if(obj.KLine20 && obj.TDSG) {
+            renderChartSafely('chartRadar', (chart) => {
+                let dates = obj.KLine20.map(item => item[0]);
+                let values = obj.KLine20.map(item => [item[1], item[2], item[3], item[4]]);
+                
+                let tiangui = [], digui = [];
+                obj.TDSG.forEach(item => {
+                    tiangui.push(item[1]);
+                    digui.push(item[2]);
+                });
+
+                chart.setOption({
+                    title: { text: 'AI雷达 (天轨与地轨通道)', left: 'center', textStyle: { fontSize: 14 } },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+                    legend: { data: ['K线', '天轨', '地轨'], bottom: 0, textStyle: { fontSize: 11 } },
+                    grid: { left: '12%', right: '5%', bottom: '20%', top: '15%' },
+                    xAxis: { type: 'category', data: dates, scale: true },
+                    yAxis: { scale: true },
+                    series: [
+                        { name: 'K线', type: 'candlestick', data: values, itemStyle: { color: '#0CF49B', color0: '#FD1050', borderColor: '#0CF49B', borderColor0: '#FD1050' } },
+                        { name: '天轨', type: 'line', data: tiangui, smooth: true, symbol: 'none', lineStyle: { color: '#3498db', width: 2 } },
+                        { name: '地轨', type: 'line', data: digui, smooth: true, symbol: 'none', lineStyle: { color: '#f1c40f', width: 2 } }
+                    ]
+                });
+            });
+        }
+
+        // ================= 渲染新增的 AI金牛 模塊 =================
+        if(obj.KLine20) {
+            // 1. AI金牛主圖 (四色K線 + 防線)
+            renderChartSafely('goldCowMain', (chart) => {
+                let dates = obj.KLine20.map(item => item[0]);
+                
+                let qsxhMap = {};
+                if(obj.QSXH) obj.QSXH.forEach(item => { qsxhMap[item[0]] = item[1]; });
+                
+                let kRed = [], kOrange = [], kBlue = [], kCyan = [];
+                obj.KLine20.forEach((item, index) => {
+                    let type = qsxhMap[item[0]] || 1;
+                    let p = [item[1], item[2], item[3], item[4]];
+                    kRed.push(type === 1 ? p : '-');
+                    kOrange.push(type === 2 ? p : '-');
+                    kBlue.push(type === 3 ? p : '-');
+                    kCyan.push(type === 4 ? p : '-');
+                });
+
+                let fcxGreen = Array(dates.length).fill('-');
+                let fcxRed = Array(dates.length).fill('-');
+                let fcxYellow = Array(dates.length).fill('-');
+                
+                let fcxMap = {};
+                if(obj.FCX) obj.FCX.forEach(i => fcxMap[i[0]] = i);
+
+                for (let i = 0; i < dates.length; i++) {
+                    let cur = fcxMap[dates[i]];
+                    if (cur && cur[1] !== "-1") {
+                        let val = cur[1], type = cur[2];
+                        if (type === 0) fcxGreen[i] = val;
+                        else if (type === 1) fcxRed[i] = val;
+                        else if (type === 2) fcxYellow[i] = val;
+
+                        // 處理過渡連線
+                        if (i > 0 && fcxMap[dates[i-1]]) {
+                            let prevType = fcxMap[dates[i-1]][2];
+                            if (prevType !== type) {
+                                if (prevType === 0) fcxGreen[i] = val;
+                                else if (prevType === 1) fcxRed[i] = val;
+                                else if (prevType === 2) fcxYellow[i] = val;
+                            }
+                        }
+                    }
+                }
+
+                chart.setOption({
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+                    legend: { data: ['強勢', '震盪', '弱勢', '尋底'], top: 0, textStyle: { fontSize: 11 } },
+                    grid: { left: '12%', right: '5%', bottom: '15%', top: '15%' },
+                    xAxis: { type: 'category', data: dates },
+                    yAxis: { scale: true },
+                    series: [
+                        { name: '強勢', type: 'candlestick', data: kRed, barGap: '-100%', itemStyle: { color: '#FD1050', color0: '#FD1050', borderColor: '#FD1050', borderColor0: '#FD1050' } },
+                        { name: '震盪', type: 'candlestick', data: kOrange, barGap: '-100%', itemStyle: { color: 'orange', color0: 'orange', borderColor: 'orange', borderColor0: 'orange' } },
+                        { name: '弱勢', type: 'candlestick', data: kBlue, barGap: '-100%', itemStyle: { color: '#0000FC', color0: '#0000FC', borderColor: '#0000FC', borderColor0: '#0000FC' } },
+                        { name: '尋底', type: 'candlestick', data: kCyan, barGap: '-100%', itemStyle: { color: '#0CF49B', color0: '#0CF49B', borderColor: '#0CF49B', borderColor0: '#0CF49B' } },
+                        { name: '空頭防線', type: 'line', data: fcxGreen, smooth: true, connectNulls: true, lineStyle: { color: 'green', width: 2 }, symbol: 'none' },
+                        { name: '多頭防線', type: 'line', data: fcxRed, smooth: true, connectNulls: true, lineStyle: { color: 'red', width: 2 }, symbol: 'none' },
+                        { name: '預警防線', type: 'line', data: fcxYellow, smooth: true, connectNulls: true, lineStyle: { color: 'yellow', width: 2 }, symbol: 'none' }
+                    ]
+                });
+            });
+
+            // 2. 多維資金流向 (JN)
+            if (obj.JN) {
+                renderChartSafely('goldCowFund', (chart) => {
+                    let dates = obj.JN.map(item => item[0]);
+                    let barData = [];
+                    let markPointData = [];
+
+                    obj.JN.forEach((item, index) => {
+                        let markTop = item[1], markMid = item[2], markBot = item[3], colorType = item[4], val = item[5];
+                        let color = '#3498db'; 
+                        if (colorType === 1) color = '#13E113';
+                        else if (colorType === 2) color = '#FF0E00';
+                        else if (colorType === 3) color = '#0000FE';
+                        else if (colorType === 4) color = '#1397FF';
+
+                        barData.push({ value: val, itemStyle: { color: color } });
+
+                        if (markTop === 1) markPointData.push({ coord: [index, val], symbol: 'pin', symbolSize: 20, itemStyle: { color: '#e74c3c' }});
+                        if (markMid === 1) markPointData.push({ coord: [index, val / 2], symbol: 'circle', symbolSize: 10, itemStyle: { color: '#f1c40f' }});
+                        if (markBot === 1) markPointData.push({ coord: [index, 0], symbol: 'triangle', symbolSize: 15, itemStyle: { color: '#9b59b6' }, symbolRotate: 180});
+                    });
+
+                    chart.setOption({
+                        tooltip: { trigger: 'axis' },
+                        grid: { left: '15%', right: '5%', bottom: '15%', top: '15%' },
+                        xAxis: { type: 'category', data: dates },
+                        yAxis: { type: 'value' },
+                        series: [{
+                            name: '資金量', type: 'bar', data: barData,
+                            markPoint: { data: markPointData, label: { show: false } }
+                        }]
+                    });
+                });
+            }
+
+            // 3. 動態牛熊指標 (DNC)
+            if (obj.DNC) {
+                renderChartSafely('goldCowDNC', (chart) => {
+                    let dates = obj.KLine20.map(item => item[0]);
+                    let dncData = [];
+                    let markPointData = [];
+
+                    let dncMap = {};
+                    obj.DNC.forEach(item => { dncMap[item[0]] = item[1]; });
+
+                    dates.forEach((date, index) => {
+                        let val = dncMap[date];
+                        if (val !== undefined && val !== -1) {
+                            dncData.push(val);
+                            if (val === 0) markPointData.push({ coord: [index, 10], symbol: 'rect', symbolSize: [15, 20], itemStyle: { color: '#00ff00' }});
+                            else if (val === 100) markPointData.push({ coord: [index, 90], symbol: 'rect', symbolSize: [15, 20], itemStyle: { color: '#ff0000' }});
+                        } else {
+                            dncData.push(null);
+                        }
+                    });
+
+                    chart.setOption({
+                        tooltip: { trigger: 'axis' },
+                        grid: { left: '12%', right: '5%', bottom: '15%', top: '10%' },
+                        xAxis: { type: 'category', data: dates },
+                        yAxis: { type: 'value', min: 0, max: 100, splitNumber: 5 },
+                        series: [{
+                            name: 'DNC', type: 'line', data: dncData, smooth: true, symbol: 'none', lineStyle: { color: '#2c3e50', width: 2 },
+                            markArea: {
+                                silent: true,
+                                data: [
+                                    [{ yAxis: 0, itemStyle: { color: '#CFFFCF' } }, { yAxis: 20 }],
+                                    [{ yAxis: 20, itemStyle: { color: '#A6FFFF' } }, { yAxis: 40 }],
+                                    [{ yAxis: 40, itemStyle: { color: '#FFF686' } }, { yAxis: 60 }],
+                                    [{ yAxis: 60, itemStyle: { color: '#FFD2B3' } }, { yAxis: 80 }],
+                                    [{ yAxis: 80, itemStyle: { color: '#FFB8B8' } }, { yAxis: 100 }]
+                                ]
+                            },
+                            markPoint: { data: markPointData, label: { show: false } }
+                        }]
+                    });
+                });
+            }
+
+            // ================= 新增：夺宝利剑 (飞天通道与波段量能) =================
+            if(obj.FTLINE) renderChartSafely('swordMain', (chart) => {
+                let dates = obj.KLine20.map(item => item[0]);
+                let values = obj.KLine20.map(i => [i[1], i[2], i[3], i[4]]);
+                let line1 = [], line2 = [], line3 = [], line4 = [];
+                let ftMap = {};
+                obj.FTLINE.forEach(i => ftMap[i[0]] = i);
+                
+                dates.forEach(d => {
+                    if(ftMap[d]) {
+                        line1.push(ftMap[d][1]); // 飞线 (绿)
+                        line2.push(ftMap[d][2]); // 中线 (红)
+                        line3.push(ftMap[d][3]); // 天线 (黄)
+                        line4.push(ftMap[d][4]); // 流线 (青)
+                    } else {
+                        line1.push('-'); line2.push('-'); line3.push('-'); line4.push('-');
+                    }
+                });
+
+                chart.setOption({
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+                    legend: { data: ['K线', '飞线', '中线', '天线', '流线'], top: 0, textStyle: { fontSize: 11 } },
+                    grid: { left: '12%', right: '5%', bottom: '15%', top: '15%' },
+                    xAxis: { type: 'category', data: dates },
+                    yAxis: { scale: true },
+                    series: [
+                        { name: 'K线', type: 'candlestick', data: values, itemStyle: { color: '#0CF49B', color0: '#FD1050', borderColor: '#0CF49B', borderColor0: '#FD1050' } },
+                        { name: '飞线', type: 'line', data: line1, smooth: true, connectNulls: true, symbol: 'none', lineStyle: { color: '#00a32e', width: 2 } },
+                        { name: '中线', type: 'line', data: line2, smooth: true, connectNulls: true, symbol: 'none', lineStyle: { color: '#de0000', width: 2 } },
+                        { name: '天线', type: 'line', data: line3, smooth: true, connectNulls: true, symbol: 'none', lineStyle: { color: '#ffb300', width: 2 } },
+                        { name: '流线', type: 'line', data: line4, smooth: true, connectNulls: true, symbol: 'none', lineStyle: { color: '#00c8ff', width: 2 } }
+                    ]
+                });
+            });
+
+            if(obj.WAVEVOL) renderChartSafely('swordVolume', (chart) => {
+                let waveDates = obj.WAVEVOL.map(i => i[0]);
+                let bCyan = obj.WAVEVOL.map(i => i[1]);
+                let bRed = obj.WAVEVOL.map(i => i[2]);
+                let lCJ = obj.WAVEVOL.map(i => i[3]);
+                let lCD = obj.WAVEVOL.map(i => i[4]);
+                let lCK = obj.WAVEVOL.map(i => i[5]);
+
+                chart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    legend: { data: ['买盘(红)', '买盘1(青)', 'CJ', 'CD', 'CK'], top: 0, textStyle: { fontSize: 11 } },
+                    grid: { left: '12%', right: '5%', bottom: '15%', top: '15%' },
+                    xAxis: { type: 'category', data: waveDates },
+                    yAxis: { scale: true },
+                    series: [
+                        { name: '买盘(红)', type: 'bar', stack: 'vol', data: bRed, itemStyle: { color: '#ec0000' } },
+                        { name: '买盘1(青)', type: 'bar', stack: 'vol', data: bCyan, itemStyle: { color: '#00ffff' } },
+                        { name: 'CJ', type: 'line', data: lCJ, smooth: true, symbol: 'none', lineStyle: { color: '#B0B0B0', width: 2 } },
+                        { name: 'CD', type: 'line', data: lCD, smooth: true, symbol: 'none', lineStyle: { color: '#ffb300', width: 2 } },
+                        { name: 'CK', type: 'line', data: lCK, smooth: true, symbol: 'none', lineStyle: { color: '#ff00ff', width: 2 } }
+                    ]
+                });
+            });
+        }
+    }
+
+    function setupProbability(objDay) {
+        if(!objDay) return;
+
+        let setBar = (id, val) => {
+            let num = parseFloat(val);
+            let isUp = num >= 0;
+            let absNum = Math.abs(num);
+            $(`#${id}_0`).html(isUp ? `上涨 ${absNum}%` : `下跌 ${absNum}%`);
+            $(`#${id}_0`).css("color", isUp ? "#c0392b" : "#27ae60");
+            $(`#${id}`).css({
+                "width": `${absNum}%`,
+                "background": isUp ? "#e74c3c" : "#2ecc71"
+            });
+        };
+
+        setBar('day5', objDay.day5chance);
+        setBar('day13', objDay.day13chance);
+        setBar('day21', objDay.day21chance);
+
+        let domPie = document.getElementById('main');
+        if(domPie && window.echarts) {
+            let myChart = echarts.getInstanceByDom(domPie) || echarts.init(domPie);
+            let chance1 = parseFloat(objDay.day1chance);
+            let isUp = chance1 >= 0;
+            let val = Math.abs(chance1);
+            
+            $('#jrszgl').text(isUp ? '近日上涨概率' : '近日下跌概率');
+
+            myChart.setOption({
+                series: [{
+                    type: 'pie',
+                    radius: ['50%', '80%'],
+                    label: { show: true, position: 'center', formatter: `${val}%`, fontSize: 24, fontWeight: 'bold', color: isUp ? '#e74c3c' : '#2ecc71' },
+                    data: [
+                        { value: val, itemStyle: { color: isUp ? '#e74c3c' : '#2ecc71' } },
+                        { value: 100 - val, itemStyle: { color: '#ecf0f1' } }
+                    ]
+                }]
+            }, true);
+        }
+    }
+</script>
+</body>
+</html>
