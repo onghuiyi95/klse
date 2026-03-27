@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta content="width=device-width,initial-scale=1, maximum-scale=1, minimum-scale=1,user-scalable=no, minimal-ui" name="viewport">
+    <meta content="telephone=no" name="format-detection">
+    <title>弘历诊股 - 独立整合量化版</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <script>
+        tailwind.config = {
+            corePlugins: { preflight: false },
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#0f172a', darker: '#0b1120', card: '#1e293b',
+                        primary: '#3b82f6', up: '#26a69a', down: '#ef5350'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style type="text/css">
+        /* ================= 原版诊股系统 CSS 样式 (完全保留) ================= */
+        * { font-family: "Microsoft YaHei", sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #f4f6f9; color: #333; }
+        
+        .wrap { margin: 70px auto 50px auto; max-width: 640px; background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); overflow: hidden; }
+        .clearfix::after { content: ""; display: block; clear: both; }
+
+        .headprofile2 { background: #2c3e50; padding: 15px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+        .profileL2 { flex: 1; }
+        .profileL2 span { color: #f1c40f; }
+        .profileR { width: 120px; height: 80px; }
+
+        .center { padding: 15px; }
+        .con_nav1 { display: flex; list-style: none; background: #ecf0f1; border-radius: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .con_nav1 li { flex: 1 1 33%; text-align: center; margin-bottom: 5px; }
+        .con_nav1 li a { display: block; padding: 10px 2px; color: #7f8c8d; text-decoration: none; font-weight: bold; border-radius: 8px; transition: all 0.3s; font-size: 13px; }
+        .con_nav1 li.active a { background: #3498db; color: #fff; }
+
+        .con_list { display: none; }
+        .con_list.show { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .market p.ynfx_zyz { display: flex; align-items: center; font-size: 16px; font-weight: bold; border-left: 4px solid #3498db; padding-left: 10px; margin-bottom: 15px; color: #2c3e50; }
+        .zjyna { background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 14px; line-height: 1.6; color: #555; }
+        .tutubox { width: 100%; height: 350px; margin: 15px 0; border: 1px solid #eee; border-radius: 8px; background: #fff; }
+
+        .wlsz_box { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 15px; }
+        .wlsz_all_title { font-weight: bold; margin-bottom: 10px; color: #2c3e50; }
+        .wlsz_all { display: flex; align-items: center; margin-bottom: 10px; font-size: 13px; }
+        .wlsz_all_left { width: 50px; font-weight: bold; }
+        .wlsz_all_right { flex: 1; display: flex; align-items: center; background: #e0e0e0; height: 18px; border-radius: 9px; overflow: hidden; position: relative; }
+        .wlsz_all_right_1 { flex: 1; height: 100%; }
+        .wlsz_all_right_2 { height: 100%; background: #e74c3c; transition: width 0.5s; }
+        .wlsz_all_right_01 { position: absolute; width: 100%; text-align: center; color: #fff; font-size: 12px; font-weight: bold; z-index: 2; line-height: 18px; }
+
+        .fonta2 { color: #666; font-size: 14px; line-height: 1.6; }
+
+        .compass-container { background: #fff; border-radius: 8px; padding: 15px; border: 1px solid #eee; margin-top: 15px; }
+        .compass-bg { background: #1e293b; border-radius: 8px; padding: 20px 0 0 0; position: relative; }
+        .compass-trapezoid { position: absolute; top: 15px; left: 15px; background: rgba(255,255,255,0.2); color: #fff; padding: 5px 15px; border-radius: 4px; font-weight: bold; font-size: 14px; z-index: 10; }
+        .compass-lsbar { display: flex; flex-wrap: wrap; justify-content: space-between; margin-top: 15px; }
+        .compass-lsbar-item { display: flex; align-items: center; width: 48%; margin-bottom: 10px; background: #f8f9fa; padding: 8px; border-radius: 6px; box-sizing: border-box; }
+        .compass-color-box { width: 16px; height: 16px; border-radius: 4px; margin-right: 10px; }
+        .compass-label { flex: 1; font-size: 13px; color: #333; font-weight: bold; }
+        .compass-risk { font-size: 12px; padding: 2px 6px; border-radius: 4px; color: #fff; font-weight: bold; text-align: center; }
+
+        .c-fc4407 { background-color: #fc4407; }
+        .c-fdc404 { background-color: #fdc404; }
+        .c-0042ff { background-color: #0042ff; }
+        .c-87cce7 { background-color: #87cce7; }
+        .c-c1f478 { background-color: #c1f478; }
+        .c-8feb8d { background-color: #8feb8d; }
+
+        .bg-fc4407 { background-color: #fc4407; color: #fff; }
+        .bg-fdc404 { background-color: #fdc404; color: #fff; }
+        .bg-0042ff { background-color: #0042ff; color: #fff; }
+        .bg-87cce7 { background-color: #87cce7; color: #fff; }
+        .bg-c1f478 { background-color: #c1f478; color: #333; }
+        .bg-8feb8d { background-color: #8feb8d; color: #333; }
+
+        .search-bar {
+            position: fixed; top: 0; left: 0; width: 100%; background: #2c3e50; padding: 12px; box-sizing: border-box;
+            display: flex; justify-content: center; align-items: center; z-index: 99999; box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .search-bar input {
+            padding: 8px 15px; border-radius: 20px; border: none; outline: none; width: 60%; max-width: 300px; font-size: 16px;
+        }
+        .search-bar button {
+            padding: 8px 20px; margin-left: 10px; border-radius: 20px; border: none; background: #f1c40f; color: #2c3e50; font-weight: bold; font-size: 16px; cursor: pointer; transition: background 0.2s;
+        }
+        .search-bar button:active { background: #e6b800; }
+        .loading-mask {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); 
+            z-index: 99998; display: none; flex-direction: column; justify-content: center; align-items: center; font-size: 18px; font-weight: bold; color: #2c3e50;
+        }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* ================= 新增量化系统组件补充 CSS ================= */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .cursor-blink::after { content: '|'; animation: blink 1s step-start infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        .modal-enter { animation: modalFadeIn 0.3s ease-out forwards; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .tv-lightweight-charts { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .strategy-btn.active-strat { background-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); transform: scale(1.05); color: white;}
+        #tvChartContainer canvas, #subChartContainer canvas { width: 100% !important; height: 100% !important; }
+    </style>
+</head>
+<body id="mybody">
+
+<div class="search-bar" style="justify-content: space-between; padding: 10px 15px;">
+    <div style="display:flex; align-items:center; flex: 1;">
+        <input type="text" id="searchInput" placeholder="诊股代码" value="" style="width: 120px; padding: 6px 12px; font-size: 14px;">
+        <button id="searchBtn" style="padding: 6px 12px; margin-left: 5px; font-size: 14px;">诊股</button>
+    </div>
+    <div style="display:flex; gap: 8px;">
+        <button onclick="generateMarketReview()" class="hover:opacity-80 transition-opacity" style="background:#4f46e5; color:white; border:none; border-radius:18px; padding:6px 10px; font-size:12px; display:flex; align-items:center; gap:4px;">
+            <i class="fa-solid fa-clipboard-list"></i> <span class="hidden sm:inline">复盘</span>
+        </button>
+        <button onclick="syncFromKLSEScreener()" class="hover:opacity-80 transition-opacity" style="background:#334155; color:white; border:none; border-radius:18px; padding:6px 10px; font-size:12px; display:flex; align-items:center; gap:4px;">
+            <i class="fa-solid fa-sync-alt" id="syncIcon"></i> <span class="hidden sm:inline">同步</span>
+        </button>
+    </div>
+</div>
+
+<div class="loading-mask" id="loadingMask">
+    <div class="spinner"></div>
+    <div id="loadingText">正在通过代理抓取并解析数据...</div>
+</div>
+
+<article class="wrap">
+    <div class="headprofile2 clearfix">
+        <div class="profileL2">
+            <div style="line-height: 1.8rem; font-size: 16px; margin-top: 5px;">
+                <span id="stkName">等待查询</span> &nbsp;<span style="color:#f1c40f;" id="stkCode">----</span>&nbsp; <span id="stkDate" style="font-size:12px; color:#bdc3c7;">--年--月--日</span>
+            </div>
+            <div style="height: 3rem; line-height: 3rem; font-weight:700; color: #2ecc71; margin-top: 10px; display: flex; gap: 15px;">
+                <div style="font-size: 28px;" id="stkPrice">--</div>
+                <div style="font-size: 16px; align-self: flex-end;" id="stkChange">--</div>
+                <div style="font-size: 16px; align-self: flex-end;" id="stkPct">--</div>
+            </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div id="valuationGauge" style="width: 110px; height: 90px; background: transparent;"></div>
+            <div class="profileR">
+                <div id="dpgz" style="width: 100%; height: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
+        <ul class="con_nav1">
+            <li class="active"><a href="javascript:;">技术指标</a></li>
+            <li><a href="javascript:;">资金流向</a></li>
+            <li><a href="javascript:;">股价波动</a></li>
+            <li><a href="javascript:;">六色罗盘</a></li>
+            <li><a href="javascript:;">AI预警</a></li>
+            <li><a href="javascript:;">AI金牛</a></li>
+            <li><a href="javascript:;">夺宝利剑</a></li>
+            <li><a href="javascript:;">AI预测</a></li>
+            <li><a href="javascript:;">实时行情</a></li>
+            <li><a href="javascript:;">量化策略</a></li>
+        </ul>
+
+        <div class="con_con">
+            <div class="con_list show">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>核心技术指标分析</span></p>
+                    <div class="ynzs_zyz clearfix">
+                        <p class="zjyna" id="techText"><b>正在提取最新行情分析，请稍后...</b></p>
+                    </div>
+                    <p class="fonta2 mar9" id="techDesc1" style="margin-top: 15px;">等待数据加载...</p>
+                    <div class="tutubox" id="kline1"></div>
+                    <p class="fonta2 mar9" id="techDesc2">等待数据加载...</p>
+                    <div class="tutubox" id="liucai"></div>
+                    <p class="fonta2 mar9" id="chouma">等待数据加载...</p>
+                </div>
+            </div>
+
+            <div class="con_list">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>资金流向分析</span></p>
+                    <div class="ynzs_zyz clearfix" style="display: flex; align-items: center; margin: 20px 0;">
+                        <div style="width: 100px; text-align: center; border: 1px solid #75a4f2; border-radius: 6px; overflow: hidden; flex-shrink: 0; box-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+                            <div style="background: #75a4f2; color: #fff; font-size: 13px; padding: 6px 0;">当日资金流向</div>
+                            <div id="fundFlowDir" style="color: #3498db; font-size: 18px; font-weight: bold; padding: 10px 0; background: #fff;">--</div>
+                        </div>
+                        <div class="zsl_right" style="flex: 1; margin-left: 15px; font-size: 14px; line-height: 1.6; color: #555;">
+                            <p class="zjyna" id="fundText" style="background: none; padding: 0; box-shadow: none;">等待数据加载...</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="fundCardsContainer">
+                    <div class="zjlx_box" style="margin-top: 20px;"></div>
+                    <div class="zjlx_box" style="margin-top: 20px;"></div>
+                    <div class="zjlx_box" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+
+            <div class="con_list">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>股价波动预测与概率</span></p>
+                </div>
+                <div class="wlsz_box"><div class="wlsz_all_title" id="jrszgl">近日预测趋势</div><div id="main" style="width: 100%; height: 200px; margin: 15px 0;"></div></div>
+                <div class="wlsz_box">
+                    <div class="wlsz_all_title">未来涨跌概率</div>
+                    <div class="wlsz_all"><div class="wlsz_all_left">5日</div><div class="wlsz_all_right"><div id="day5_0" class="wlsz_all_right_01">--</div><div style="flex: 1; height: 100%;"><div id="day5" class="wlsz_all_right_2" style="width: 0%;"></div></div></div></div>
+                    <div class="wlsz_all"><div class="wlsz_all_left">13日</div><div class="wlsz_all_right"><div id="day13_0" class="wlsz_all_right_01">--</div><div style="flex: 1; height: 100%;"><div id="day13" class="wlsz_all_right_2" style="width: 0%;"></div></div></div></div>
+                    <div class="wlsz_all"><div class="wlsz_all_left">21日</div><div class="wlsz_all_right"><div id="day21_0" class="wlsz_all_right_01">--</div><div style="flex: 1; height: 100%;"><div id="day21" class="wlsz_all_right_2" style="width: 0%;"></div></div></div></div>
+                </div>
+                <div class="wlsz_box">
+                    <div class="wlsz_all_title">历史波动区间图</div>
+                    <div class="wlsz_all" style="margin-bottom: 15px;">
+                        <div class="wlsz_all_center" id="bdgl_1" style="width: 33%; text-align: center; font-weight: bold; font-size: 16px;"><span style="color: green">--%</span></div>
+                        <div class="wlsz_all_center" id="bdgl_2" style="width: 33%; text-align: center; font-weight: bold;">--</div>
+                        <div class="wlsz_all_center" id="bdgl_3" style="width: 33%; text-align: center; font-weight: bold;">--</div>
+                    </div>
+                    <div class="wlsz_all" style="margin-bottom: 15px;">
+                        <div class="wlsz_all_center" id="bdgl_4" style="width: 33%; text-align: center;"><span style="color: green">上涨概率</span></div>
+                        <div class="wlsz_all_center" style="width: 33%; text-align: center; color: #888;">预测高点</div>
+                        <div class="wlsz_all_center" style="width: 33%; text-align: center; color: #888;">预测低点</div>
+                    </div>
+                    <div id="bdqjKine" style="width: 100%; height: 350px;"></div>
+                </div>
+            </div>
+
+            <div class="con_list">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>六色罗盘分析</span></p>
+                    <div class="zjyna">
+                        <p style="margin: 0;">根据超级云脑六色罗盘的全方位检测结果，该股当前处于 <strong id="compassStatus" style="color:#e74c3c;">--</strong>， 安全级别为 <strong id="compassLevel" style="color:#e74c3c;">--</strong>。</p>
+                    </div>
+                    
+                    <div class="compass-container">
+                        <div class="compass-bg">
+                            <div class="compass-trapezoid" id="compassStockName">等待查询</div>
+                            <div id="sixColorChart" style="width: 100%; height: 220px;"></div>
+                        </div>
+                        
+                        <div class="compass-lsbar">
+                            <div class="compass-lsbar-item"><div class="compass-color-box c-fc4407"></div><div class="compass-label">弱撑强压区</div><div class="compass-risk bg-fc4407">极高风险</div></div>
+                            <div class="compass-lsbar-item"><div class="compass-color-box c-fdc404"></div><div class="compass-label">弱撑中压区</div><div class="compass-risk bg-fdc404">较高风险</div></div>
+                            <div class="compass-lsbar-item"><div class="compass-color-box c-0042ff"></div><div class="compass-label">弱撑弱压区</div><div class="compass-risk bg-0042ff">中等风险</div></div>
+                            <div class="compass-lsbar-item"><div class="compass-color-box c-87cce7"></div><div class="compass-label">强撑强压区</div><div class="compass-risk bg-87cce7">一般安全</div></div>
+                            <div class="compass-lsbar-item"><div class="compass-color-box c-c1f478"></div><div class="compass-label">强撑中压区</div><div class="compass-risk bg-c1f478">较为安全</div></div>
+                            <div class="compass-lsbar-item"><div class="compass-color-box c-8feb8d"></div><div class="compass-label">强撑弱压区</div><div class="compass-risk bg-8feb8d">非常安全</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="con_list">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>50结构 (顶底拐点)</span></p>
+                    <div class="tutubox" id="chart50"></div>
+                    <p class="fonta2 mar9">利用数字序列精准提示股价短期的顶部或底部拐点，辅助左侧交易布局。</p>
+                </div>
+
+                <div class="market" style="margin-top: 25px;">
+                    <p class="ynfx_zyz"><span>AI 雷达 (天轨地轨)</span></p>
+                    <div class="tutubox" id="chartRadar"></div>
+                    <p class="fonta2 mar9">通过蓝色的“天轨”与黄色的“地轨”构建波动通道，捕捉异常突破与回踩信号。</p>
+                </div>
+            </div>
+
+            <div class="con_list">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>AI金牛 (趨勢信號與防線)</span></p>
+                    <div class="tutubox" id="goldCowMain" style="height: 380px;"></div>
+                    <p class="fonta2 mar9"><strong>四色K線</strong>：紅(強勢) / 橙(震盪) / 藍(弱勢) / 青(尋底)<br/><strong>生命防線</strong>：紅(多頭) / 綠(空頭) / 黃(預警)</p>
+                </div>
+
+                <div class="market" style="margin-top: 25px;">
+                    <p class="ynfx_zyz"><span>多維資金流向 (高階版)</span></p>
+                    <div class="tutubox" id="goldCowFund" style="height: 250px;"></div>
+                    <p class="fonta2 mar9">自動識別大中小單結構，四色柱體提示主力資金力度，並附帶頂底異動圖標預警。</p>
+                </div>
+
+                <div class="market" style="margin-top: 25px;">
+                    <p class="ynfx_zyz"><span>動態牛熊指標 (DNC)</span></p>
+                    <div class="tutubox" id="goldCowDNC" style="height: 250px;"></div>
+                    <p class="fonta2 mar9">五彩背景帶動態區分超買與超賣區，頂底方塊及時提示行情極值反轉。</p>
+                </div>
+            </div>
+            
+            <div class="con_list">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>飞天通道 (多空趋势)</span></p>
+                    <div class="tutubox" id="swordMain" style="height: 380px;"></div>
+                    <p class="fonta2 mar9"><strong>飞线(绿)</strong> / <strong>中线(红)</strong> / <strong>天线(黄)</strong> / <strong>流线(青)</strong>。四线合一构成趋势彩带，辨别股价运行通道。</p>
+                </div>
+                <div class="market" style="margin-top: 25px;">
+                    <p class="ynfx_zyz"><span>波段量能 (起爆点分析)</span></p>
+                    <div class="tutubox" id="swordVolume" style="height: 250px;"></div>
+                    <p class="fonta2 mar9">监控底层筹码与异动量能，通过买盘堆叠与趋势线交织，寻找资金拐点与起爆点。</p>
+                </div>
+            </div>
+
+            <div class="con_list">
+                <div class="market">
+                    <p class="ynfx_zyz"><span>AI 预测大模型 (时空预测)</span></p>
+                    
+                    <div style="background: linear-gradient(180deg, #020b22 0%, #071945 50%, #020b22 100%); border-radius: 12px; padding: 30px 15px; position: relative; margin-top: 15px; color: #fff; overflow: hidden; min-height: 280px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);">
+                        
+                        <div style="display: flex; justify-content: center; align-items: center; position: relative; z-index: 10; margin-bottom: 25px;">
+                            <div style="background: #18397a; border: 1px solid rgba(6, 182, 212, 0.5); border-radius: 999px; padding: 6px 24px; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3); text-align: center;">
+                                <span style="color: #d1d5db; font-size: 13px;">
+                                    <span id="ui-ai-date">----/--/--</span> &nbsp;|&nbsp; 现价: <span id="ui-ai-now" style="color: #fff; font-weight: bold; font-family: monospace; font-size: 16px; margin-left: 4px;">---</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; position: relative; z-index: 10;">
+                            <div style="display: flex; flex-direction: column; gap: 20px; width: 38%;">
+                                <div style="background: linear-gradient(180deg, rgba(16, 42, 94, 0.9) 0%, rgba(8, 20, 50, 0.9) 100%); border: 1px solid #ef4444; border-radius: 6px; padding: 8px; text-align: center; box-shadow: inset 0 0 8px rgba(239, 68, 68, 0.3);">
+                                    <div style="color: #fca5a5; font-size: 12px; margin-bottom: 4px;">卖出价</div>
+                                    <div id="ui-ai-sell" style="color: #fff; font-family: monospace; font-size: 18px; font-weight: bold;">---</div>
+                                </div>
+                                <div style="background: linear-gradient(180deg, rgba(16, 42, 94, 0.9) 0%, rgba(8, 20, 50, 0.9) 100%); border: 1px solid #06b6d4; border-radius: 6px; padding: 8px; text-align: center; box-shadow: inset 0 0 8px rgba(6, 182, 212, 0.3);">
+                                    <div style="color: #67e8f9; font-size: 12px; margin-bottom: 4px;">预测低一</div>
+                                    <div id="ui-ai-low1" style="color: #fff; font-family: monospace; font-size: 18px; font-weight: bold;">---</div>
+                                </div>
+                                <div style="background: linear-gradient(180deg, rgba(16, 42, 94, 0.9) 0%, rgba(8, 20, 50, 0.9) 100%); border: 1px solid #22c55e; border-radius: 6px; padding: 8px; text-align: center; box-shadow: inset 0 0 8px rgba(34, 197, 94, 0.3);">
+                                    <div style="color: #4ade80; font-size: 12px; margin-bottom: 4px;">预测高一</div>
+                                    <div id="ui-ai-h1" style="color: #fff; font-family: monospace; font-size: 18px; font-weight: bold;">---</div>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 20px; width: 38%;">
+                                <div style="background: linear-gradient(180deg, rgba(16, 42, 94, 0.9) 0%, rgba(8, 20, 50, 0.9) 100%); border: 1px solid #eab308; border-radius: 6px; padding: 8px; text-align: center; box-shadow: inset 0 0 8px rgba(234, 179, 8, 0.3);">
+                                    <div style="color: #facc15; font-size: 12px; margin-bottom: 4px;">买回价</div>
+                                    <div id="ui-ai-buy" style="color: #fff; font-family: monospace; font-size: 18px; font-weight: bold;">---</div>
+                                </div>
+                                <div style="background: linear-gradient(180deg, rgba(16, 42, 94, 0.9) 0%, rgba(8, 20, 50, 0.9) 100%); border: 1px solid #06b6d4; border-radius: 6px; padding: 8px; text-align: center; box-shadow: inset 0 0 8px rgba(6, 182, 212, 0.3);">
+                                    <div style="color: #67e8f9; font-size: 12px; margin-bottom: 4px;">预测低二</div>
+                                    <div id="ui-ai-low2" style="color: #fff; font-family: monospace; font-size: 18px; font-weight: bold;">---</div>
+                                </div>
+                                <div style="background: linear-gradient(180deg, rgba(16, 42, 94, 0.9) 0%, rgba(8, 20, 50, 0.9) 100%); border: 1px solid #22c55e; border-radius: 6px; padding: 8px; text-align: center; box-shadow: inset 0 0 8px rgba(34, 197, 94, 0.3);">
+                                    <div style="color: #4ade80; font-size: 12px; margin-bottom: 4px;">预测高二</div>
+                                    <div id="ui-ai-h2" style="color: #fff; font-family: monospace; font-size: 18px; font-weight: bold;">---</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5;">
+                            <div style="position: absolute; width: 120px; height: 120px; border-radius: 50%; background: rgba(59, 130, 246, 0.2); filter: blur(10px); z-index: -1;"></div>
+                            <div style="width: 100px; height: 100px; border-radius: 50%; border: 2px dashed #22d3ee; animation: ai-spin 10s linear infinite;"></div>
+                            <div style="position: absolute; text-align: center; z-index: 10;">
+                                <div style="font-size: 24px; font-weight: bold; color: #93c5fd; margin-bottom: 2px;">AI</div>
+                                <div style="font-size: 12px; color: #22d3ee; font-weight: bold; letter-spacing: 2px; white-space: nowrap;">预测大模型</div>
+                            </div>
+                        </div>
+                        <style>@keyframes ai-spin { 100% { transform: rotate(360deg); } }</style>
+                    </div>
+                    
+                    <p class="fonta2 mar9" style="margin-top: 15px;">利用云端超级计算，结合时空共振算法，为您精准预判未来短期的高低点及操作价格区间。</p>
+                </div>
+            </div>
+
+            <div class="con_list">
+                <div class="market bg-darker p-4 rounded-xl" style="background:#0b1120;">
+                    <p class="ynfx_zyz" style="color:#fff; border-left-color: #3b82f6;"><span style="color:#fff;">实时量化追踪矩阵</span></p>
+                    
+                    <div id="page-realtime" class="flex flex-col gap-4 text-slate-300">
+                        <div class="relative w-full">
+                            <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 z-40"></i>
+                            <input type="text" id="globalSearch" placeholder="搜索行情列表 (代码或名称)..." oninput="debounceSearch()" autocomplete="off" class="w-full bg-dark border border-slate-600 rounded-lg py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-primary text-white" style="background:#0f172a; border: 1px solid #475569; outline: none;">
+                        </div>
+
+                        <div class="bg-card rounded-xl border border-slate-700 p-4 shadow-lg flex flex-col sm:flex-row items-center gap-3 justify-between" style="background:#1e293b; border: 1px solid #334155;">
+                            <h2 class="text-sm font-semibold text-white whitespace-nowrap"><i class="fa-solid fa-filter text-primary"></i> 动量滤网</h2>
+                            <div class="flex gap-2 w-full sm:w-auto">
+                                <select id="signalFilter" onchange="applyFilters()" class="flex-grow bg-dark border border-slate-600 rounded-lg py-1.5 px-3 text-sm text-white focus:outline-none focus:border-primary" style="background:#0f172a; border: 1px solid #475569; outline: none;">
+                                    <option value="all">所有信号</option>
+                                    <option value="Bullish">🔥 动量看涨</option>
+                                    <option value="Neutral">⚖️ 中立盘整</option>
+                                    <option value="Bearish">⚠️ 动量看跌</option>
+                                </select>
+                                <button onclick="resetAllFilters()" class="px-4 py-1.5 bg-slate-700 text-white rounded-lg text-sm transition-colors shadow-md whitespace-nowrap border-none" style="background:#334155; outline:none;">重置</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-card rounded-xl border border-slate-700 overflow-hidden relative min-h-[400px] shadow-lg" style="background:#1e293b; border: 1px solid #334155;">
+                            <div id="loadingOverlay" class="hidden absolute inset-0 bg-dark/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-center p-6">
+                                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-primary mb-4"></i>
+                                <p id="realtimeLoadingText" class="text-white font-medium">正在拉取实盘快照...</p>
+                            </div>
+                            <div class="bg-slate-800 px-4 py-3 border-b border-slate-700 flex justify-between items-center text-xs text-slate-400" style="background:#1e293b; border-bottom: 1px solid #334155;">
+                                <span>点击个股进行深度诊断</span>
+                                <span>已加载 <strong id="stockCount" class="text-white text-sm">0</strong> 支目标</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse" style="min-width: 320px;">
+                                    <thead class="bg-slate-800 text-slate-300 text-sm border-b border-slate-700 sticky top-0 z-10" style="background:#0f172a;">
+                                        <tr>
+                                            <th class="py-3 px-4 font-medium cursor-pointer hover:text-white whitespace-nowrap" onclick="sortTable('code')">资产标的 <i class="fa-solid fa-sort ml-1 text-xs"></i></th>
+                                            <th class="py-3 px-4 font-medium text-right cursor-pointer hover:text-white whitespace-nowrap" onclick="sortTable('price')">价格 <i class="fa-solid fa-sort ml-1 text-xs"></i></th>
+                                            <th class="py-3 px-4 font-medium text-right cursor-pointer hover:text-white whitespace-nowrap" onclick="sortTable('change')">涨跌 <i class="fa-solid fa-sort ml-1 text-xs"></i></th>
+                                            <th class="py-3 px-4 font-medium text-center whitespace-nowrap">云推演</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="stockTableBody" class="text-sm divide-y divide-slate-700">
+                                        <tr><td colspan="4" class="py-20 text-center text-slate-500">正在请求核心网关...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="con_list">
+                <div class="market bg-darker p-4 rounded-xl" style="background:#0b1120;">
+                    <p class="ynfx_zyz" style="color:#fff; border-left-color: #3b82f6;"><span style="color:#fff;">十大量化武器库</span></p>
+                    <div id="page-quant" class="flex flex-col gap-4 text-slate-300">
+                        <div class="grid grid-cols-5 gap-2 mb-2">
+                            <button onclick="loadStrategyData(1, this)" class="strategy-btn active-strat py-2 px-1 rounded-lg text-[10px] font-bold transition-all border-none" style="outline:none;">爆庄套利</button>
+                            <button onclick="loadStrategyData(2, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-slate-300 transition-all border-none" style="background:#334155; outline:none;">无敌猎庄</button>
+                            <button onclick="loadStrategyData(3, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-slate-300 transition-all border-none" style="background:#334155; outline:none;">爆涨神助</button>
+                            <button onclick="loadStrategyData(4, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-slate-300 transition-all border-none" style="background:#334155; outline:none;">疯牛出闸</button>
+                            <button onclick="loadStrategyData(5, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-slate-300 transition-all border-none" style="background:#334155; outline:none;">与庄共舞</button>
+                            <button onclick="loadStrategyData(6, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-slate-300 transition-all border-none" style="background:#334155; outline:none;">强庄锁仓</button>
+                            <button onclick="loadStrategyData(7, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-slate-300 transition-all border-none" style="background:#334155; outline:none;">顶庄博弈</button>
+                            <button onclick="loadStrategyData(8, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-slate-300 transition-all border-none" style="background:#334155; outline:none;">短线暴利</button>
+                            <button onclick="loadStrategyData(9, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-slate-300 transition-all border-none" style="background:#334155; outline:none;">极限捞底</button>
+                            <button onclick="loadStrategyData(10, this)" class="strategy-btn bg-slate-700 py-2 px-1 rounded-lg text-[10px] font-bold text-slate-300 transition-all border-none" style="background:#334155; outline:none;">庄家起爆</button>
+                        </div>
+                        
+                        <div class="bg-card rounded-xl border border-slate-700 overflow-hidden shadow-lg min-h-[400px]" style="background:#1e293b; border: 1px solid #334155;">
+                            <div class="bg-slate-800 px-4 py-3 border-b border-slate-700" style="background:#0f172a;">
+                                <h3 id="strategyTitle" class="text-sm font-bold text-white"><i class="fa-solid fa-bolt text-yellow-400 mr-2"></i> 模型匹配池</h3>
+                                <p id="strategyDesc" class="text-[10px] text-slate-400 mt-1 leading-relaxed">监控主力资金爆发性流入。主看 BBD 资金动能翻红。</p>
+                            </div>
+                            <div id="strategyContent" class="overflow-x-auto text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</article>
+
+<div id="aiModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4" style="z-index: 100000; font-family: sans-serif;">
+    <div class="bg-card border border-slate-600 rounded-2xl shadow-2xl w-full max-w-4xl modal-enter overflow-hidden flex flex-col max-h-[95vh]" style="background:#1e293b;">
+        <div class="bg-slate-800 px-6 py-4 border-b border-slate-700 flex justify-between items-center shrink-0" style="background:#0f172a;">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary border border-primary/30">
+                    <i class="fa-solid fa-dna text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white leading-tight" id="modalStockName">--</h3>
+                    <p class="text-xs text-slate-400">主力量化推演 (Source: Yahoo Finance)</p>
+                </div>
+            </div>
+            <button onclick="closeModal('aiModal')" class="text-slate-400 hover:text-white bg-transparent border-none outline-none"><i class="fa-solid fa-times text-lg"></i></button>
+        </div>
+        
+        <div class="p-6 overflow-y-auto flex-grow flex flex-col gap-4 text-slate-300">
+            <div class="flex flex-col sm:flex-row gap-4 items-end">
+                <div class="bg-dark p-3 rounded-lg border border-slate-700 w-full sm:w-1/3 text-center" style="background:#0f172a;">
+                    <div class="text-xs text-slate-400 mb-1">演算法终极评级</div>
+                    <div class="text-xl font-bold mt-1 tracking-wider" id="modalSignal">--</div>
+                </div>
+                <div class="w-full sm:w-2/3 flex flex-col sm:flex-row justify-end gap-2">
+                    <select id="mainChartSelect" onchange="toggleMainIndicator()" class="w-full sm:w-auto bg-dark border border-slate-600 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-primary cursor-pointer shadow-inner" style="background:#0f172a; outline:none;">
+                        <option value="none">🕯️ 纯 K 线 (无主图指标)</option>
+                        <option value="trend">📈 趋势阶梯 (Trend Ladder)</option>
+                    </select>
+                    <select id="indicatorSelect" onchange="switchIndicator()" class="w-full sm:w-auto bg-dark border border-slate-600 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-primary cursor-pointer shadow-inner" style="background:#0f172a; outline:none;">
+                        <option value="banker">🎗️ 主力节奏 (Banker Rhythm)</option>
+                        <option value="accumulation">📥 主力吸筹 (Banker Accumulation)</option>
+                        <option value="bbd">📈 BBD (资金动能)</option>
+                        <option value="macd">📉 MACD (趋势指标)</option>
+                        <option value="volume">📊 Volume (成交量)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="tvChartContainer" class="w-full h-[350px] min-h-[350px] border border-slate-700 rounded-t-lg bg-[#131722] relative"></div>
+            <div id="subChartContainer" class="w-full h-[220px] min-h-[220px] border border-slate-700 border-t-0 rounded-b-lg bg-[#131722] relative"></div>
+            
+            <div class="border-l-2 border-primary pl-4 rounded-r-lg p-4 mt-2 min-h-[130px]" style="background:rgba(15, 23, 42, 0.5);">
+                <div id="aiLoading" class="flex items-center gap-2 text-primary font-medium py-2">
+                    <i class="fa-solid fa-gear fa-spin"></i> 正在呼叫超级云脑生成量化研报...
+                </div>
+                <div id="aiContent" class="text-slate-300 leading-relaxed space-y-3 hidden text-sm"></div>
+            </div>
+        </div>
+        <div class="bg-slate-800 px-6 py-3 border-t border-slate-700 text-right shrink-0" style="background:#0f172a;">
+            <button onclick="closeModal('aiModal')" class="px-5 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-lg border-none outline-none" style="background:#3b82f6;">确认关闭</button>
+        </div>
+    </div>
+</div>
+
+<div id="reviewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4" style="z-index: 100000; font-family: sans-serif;">
+    <div class="bg-card border border-indigo-500/50 rounded-2xl shadow-2xl w-full max-w-2xl modal-enter overflow-hidden flex flex-col max-h-[90vh]" style="background:#1e293b;">
+        <div class="bg-slate-800 px-6 py-4 border-b border-slate-700 flex justify-between items-center" style="background:#0f172a;">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-indigo-600/20 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
+                    <i class="fa-solid fa-bullseye text-lg"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">🎯 宏观数据复盘推演</h3>
+            </div>
+            <button onclick="closeModal('reviewModal')" class="text-slate-400 hover:text-white bg-transparent border-none outline-none"><i class="fa-solid fa-times text-lg"></i></button>
+        </div>
+        <div class="p-6 overflow-y-auto flex-grow text-slate-300" id="reviewContent"></div>
+        <div class="bg-slate-800 px-6 py-3 border-t border-slate-700 text-right shadow-inner" style="background:#0f172a;">
+            <button onclick="closeModal('reviewModal')" class="px-5 py-2 text-white rounded-lg text-sm font-bold border-none outline-none" style="background:#4f46e5;">确认关闭</button>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    const PROXY_URL = 'https://script.google.com/macros/s/AKfycbwNxtWwgZhGV7giqEViIsZzELNFyqviC42xDqw_zS4xqhG5UFHt-izvKvsQxubDIAwMpw/exec?url=';
+    
+    // ⚠️ 请将下面引号里的内容替换为你自己真实的 API Key！
+    const apiKey = "你的API_KEY"; 
+
+    $(function(){
+        $(".con_nav1 li").click(function(){
+            var index = $(this).index();
+            $(this).addClass('active').siblings().removeClass("active");
+            $(".con_list").eq(index).addClass('show').siblings().removeClass("show");
+            
+            setTimeout(function() {
+                if(window.echarts) {
+                    ['valuationGauge', 'kline1', 'liucai', 'main', 'bdqjKine', 'sixColorChart', 'chart50', 'chartRadar', 'goldCowMain', 'goldCowFund', 'goldCowDNC', 'swordMain', 'swordVolume'].forEach(id => {
+                        let dom = document.getElementById(id);
+                        if(dom) {
+                            let inst = echarts.getInstanceByDom(dom);
+                            if(inst) inst.resize();
+                        }
+                    });
+                }
+            }, 100);
+        });
+
+        $("#searchBtn").click(triggerFetch);
+        $("#searchInput").keypress(function(e) { if(e.which == 13) triggerFetch(); });
+
+        triggerFetch();
+        syncFromKLSEScreener();
+        loadStrategyData(1, document.querySelector('.strategy-btn'));
+    });
+
+    function triggerFetch() {
+        const code = $('#searchInput').val().trim();
+        let targetUrl = `https://hcm.rzfwq.com/hwhcnewB/l_yzg1.zg?device=5&market=my&language=cn`;
+        if (code) { targetUrl = `https://hcm.rzfwq.com/hwhcnewB/l_yzg1.zg?code=${code}&device=5&market=my&language=cn`; }
+        const displayCode = code || '默认行情';
+
+        $('#loadingMask').css('display', 'flex');
+        $('#loadingText').text(`正在拉取 ${displayCode} 的网页源码...`);
+
+        fetch(PROXY_URL + encodeURIComponent(targetUrl))
+            .then(res => res.text())
+            .then(htmlStr => {
+                $('#loadingText').text('解析并提取核心数据...');
+                if (htmlStr.trim().startsWith('{')) { try { const jsonObj = JSON.parse(htmlStr); if (jsonObj.contents) htmlStr = jsonObj.contents; } catch(e) {} }
+                const parser = new DOMParser(); const doc = parser.parseFromString(htmlStr, 'text/html');
+
+                $('#techText').html(doc.querySelector('.zjyna')?.innerHTML || "无分析数据");
+                $('#techDesc1').html(doc.querySelectorAll('.fonta2')[0]?.innerHTML || "");
+                $('#techDesc2').html(doc.querySelectorAll('.fonta2')[1]?.innerHTML || "");
+                $('#chouma').html(doc.getElementById('chouma')?.innerHTML || "");
+                
+                const flowSpan = doc.querySelector('.sus_leadzhengu span');
+                if (flowSpan) $('#fundFlowDir').text(flowSpan.innerText);
+                const zjynaEls = doc.querySelectorAll('.zjyna');
+                if (zjynaEls.length > 1) $('#fundText').html(zjynaEls[1].innerHTML);
+                
+                const sourceBoxes = doc.querySelectorAll('.zjlx_box');
+                const targetBoxes = document.querySelectorAll('#fundCardsContainer .zjlx_box');
+                sourceBoxes.forEach((box, idx) => { if (targetBoxes[idx]) targetBoxes[idx].innerHTML = box.innerHTML; });
+
+                let ylNum = NaN, zcNum = NaN;
+                const textContentAll = doc.body ? doc.body.textContent : htmlStr;
+                const pMatch = textContentAll.match(/压力位(?:为|是)?\s*[:：]?\s*(\d+(?:\.\d+)?)/);
+                const sMatch = textContentAll.match(/支撑位(?:为|是)?\s*[:：]?\s*(\d+(?:\.\d+)?)/);
+                if (pMatch) ylNum = parseFloat(pMatch[1]); if (sMatch) zcNum = parseFloat(sMatch[1]);
+
+                let valuationNum = 20; 
+                const vMatches = htmlStr.match(/DrawDPZZZZ\(['"](\d+(?:\.\d+)?)['"]\)/g);
+                if (vMatches && vMatches.length > 0) {
+                    const lastMatch = vMatches[vMatches.length - 1].match(/\d+(?:\.\d+)?/);
+                    if (lastMatch) valuationNum = parseFloat(lastMatch[0]);
+                }
+
+                let dataStr = '', dataDayStr = '';
+                doc.querySelectorAll('script').forEach(s => {
+                    const txt = s.textContent;
+                    let dIdx = txt.indexOf("var data = '");
+                    if (dIdx !== -1) { let start = dIdx + 12; let end = txt.indexOf("';", start); if (end > start) dataStr = txt.substring(start, end); }
+                    let dayIdx = txt.indexOf("var dataDay = '");
+                    if (dayIdx !== -1) { let start = dayIdx + 15; let end = txt.indexOf("';", start); if (end > start) dataDayStr = txt.substring(start, end); }
+                });
+
+                if (dataStr) {
+                    try {
+                        let parsed = JSON.parse(dataStr);
+                        let extractedName = $('#techText').text().match(/([A-Z0-9\s]+)\(/);
+                        if (extractedName && extractedName[1]) $('#stkName').text(extractedName[1].trim()); else $('#stkName').text(displayCode);
+                        $('#stkCode').text(code || '--');
+                        
+                        if (parsed.KLine20 && parsed.KLine20.length > 0) {
+                            let lastDay = parsed.KLine20[parsed.KLine20.length - 1], prevDay = parsed.KLine20[parsed.KLine20.length - 2];
+                            $('#stkDate').text(lastDay[0]);
+                            let price = lastDay[2], prevPrice = prevDay ? prevDay[2] : price, change = price - prevPrice, pct = (change / prevPrice) * 100;
+                            $('#stkPrice').text(price.toFixed(3));
+                            $('#stkChange').text((change > 0 ? "+" : "") + change.toFixed(3));
+                            $('#stkPct').text((pct > 0 ? "+" : "") + pct.toFixed(2) + "%");
+                            let color = change >= 0 ? "#e74c3c" : "#2ecc71";
+                            $('#stkPrice, #stkChange, #stkPct').css("color", color);
+                            $('#ui-ai-date').text(lastDay[0]); $('#ui-ai-now').text(price.toFixed(3));
+                        }
+                        drawAllCharts(parsed, ylNum, zcNum, valuationNum);
+                    } catch(e) { console.error("图表解析失败:", e); }
+                }
+
+                if (dataDayStr) { try { setupProbability(JSON.parse(dataDayStr)); } catch(e) {} }
+                $('#loadingMask').hide();
+            })
+            .catch(err => {
+                $('#loadingText').html(`<span style="color:#e74c3c">抓取失败: ${err.message}</span>`);
+                setTimeout(() => { $('#loadingMask').hide(); }, 2000);
+            });
+
+        const ggycToken = "9H8rtFRVgUPIboGxpxrnbZi0+fEeMx8pywnIlrmTxY9NbPN5lz+BC+9t9JQuIXc4eYlZafevxowsEfry7ck";
+        fetch("https://api.homilychart.com/link/api/home/indexData", {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'token': ggycToken },
+            body: JSON.stringify({ market: "my", code: code || "", language: "cn", marketList: "" })
+        }).then(res => res.json()).then(dataMain => {
+            if (dataMain.code === 200 && dataMain.data && dataMain.data.GGYC) {
+                let ggyc = dataMain.data.GGYC;
+                $('#ui-ai-sell').text(ggyc.sell || '---'); $('#ui-ai-buy').text(ggyc.buy || '---');
+                $('#ui-ai-low1').text(ggyc.low1 || '---'); $('#ui-ai-low2').text(ggyc.low2 || '---');
+                $('#ui-ai-h1').text(ggyc.h1 || '---'); $('#ui-ai-h2').text(ggyc.h2 || '---');
+            } else { $('#ui-ai-sell, #ui-ai-buy, #ui-ai-low1, #ui-ai-low2, #ui-ai-h1, #ui-ai-h2').text('---'); }
+        }).catch(err => $('#ui-ai-sell, #ui-ai-buy, #ui-ai-low1, #ui-ai-low2, #ui-ai-h1, #ui-ai-h2').text('---'));
+    }
+
+    function renderChartSafely(domId, renderLogic) {
+        let dom = document.getElementById(domId);
+        if(!dom || !window.echarts) return;
+        try { let oldInst = echarts.getInstanceByDom(dom); if(oldInst) oldInst.dispose(); let chart = echarts.init(dom); renderLogic(chart); } catch(e) {}
+    }
+
+    function gggl(sl, up, dpwn){
+        $("#bdgl_2").html(up); $("#bdgl_3").html(dpwn);
+        if(sl > 0){ $("#bdgl_1").html("<span style=\"color: green\">" + sl + "%</span>"); $("#bdgl_4").html("<span style=\"color: green\">上涨概率</span>"); }
+        else { $("#bdgl_1").html("<span style=\"color: red\">" + (0-sl) + "%</span>"); $("#bdgl_4").html("<span style=\"color: red\">下跌概率</span>"); }
+    }
+
+    function drawAllCharts(obj, ylNum, zcNum, valuationNum) {
+        if(!obj) return;
+        renderChartSafely('valuationGauge', (chart) => {
+            let val = valuationNum || 0, color = '#90ed7d'; if (val > 33 && val <= 66) color = '#87ceeb'; else if (val > 66) color = '#ff471a';
+            chart.setOption({ series: [{ type: 'gauge', startAngle: 180, endAngle: 0, center: ['50%', '70%'], radius: '100%', min: 0, max: 100, splitNumber: 3, axisLine: { lineStyle: { width: 15, color: [ [0.333, '#90ed7d'], [0.666, '#87ceeb'], [1, '#ff471a'] ] } }, pointer: { length: '65%', width: 4, itemStyle: { color: color } }, axisTick: { show: true, splitNumber: 4, length: 15, distance: -15, lineStyle: { color: '#fff', width: 2 } }, splitLine: { show: true, length: 15, distance: -15, lineStyle: { color: '#fff', width: 3 } }, axisLabel: { show: false }, detail: { formatter: '个股估值: {value}', offsetCenter: [0, '30%'], fontSize: 12, color: color, fontWeight: 'bold' }, data: [{ value: val }] }] });
+        });
+        if(obj.KLine20) {
+            renderChartSafely('dpgz', (chart) => { chart.setOption({ grid: { top: 5, bottom: 5, left: 5, right: 5 }, xAxis: { type: 'category', show: false, data: obj.KLine20.map(item=>item[0]) }, yAxis: { type: 'value', show: false, scale: true }, series: [{ type: 'line', data: obj.KLine20.map(item => item[2]), smooth: true, itemStyle: { color: '#f1c40f' }, lineStyle: { width: 2 }, symbol: 'none' }] }); });
+            renderChartSafely('kline1', (chart) => {
+                let yl = obj.QXSBQ && !isNaN(parseFloat(obj.QXSBQ.yl)) ? parseFloat(obj.QXSBQ.yl) : ylNum;
+                let zc = obj.QXSBQ && !isNaN(parseFloat(obj.QXSBQ.zc)) ? parseFloat(obj.QXSBQ.zc) : zcNum;
+                let markLineOpt = { symbol: ['none', 'none'], data: [] };
+                if (!isNaN(yl)) markLineOpt.data.push({ yAxis: yl, lineStyle: { color: '#c0392b', type: 'dashed', width: 2 }, label: { formatter: '压力位 {c}', position: 'insideStartTop', color: '#c0392b', fontSize: 12 }});
+                if (!isNaN(zc)) markLineOpt.data.push({ yAxis: zc, lineStyle: { color: '#27ae60', type: 'dashed', width: 2 }, label: { formatter: '支撑位 {c}', position: 'insideStartBottom', color: '#27ae60', fontSize: 12 }});
+                chart.setOption({ tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } }, grid: { left: '12%', right: '5%', bottom: '15%', top: '15%' }, xAxis: { type: 'category', data: obj.KLine20.map(i => i[0]), scale: true }, yAxis: { scale: true }, series: [ { name: 'K线', type: 'candlestick', data: obj.KLine20.map(i => [i[1], i[2], i[3], i[4]]), itemStyle: { color: '#0CF49B', color0: '#FD1050', borderColor: '#0CF49B', borderColor0: '#FD1050' }, markLine: markLineOpt.data.length > 0 ? markLineOpt : undefined }, { name: '均线', type: 'line', data: obj.KLine20.map(i => i[5] || i[2]), smooth: true, symbol: 'none', lineStyle: { color: '#f1c40f', width: 2 } } ] });
+            });
+            renderChartSafely('bdqjKine', (chart) => {
+                let categoryData = [], values = [], kData = JSON.parse(JSON.stringify(obj.KLine20)); 
+                for (let i = 0; i < kData.length; i++) { categoryData.push(kData[i].splice(0, 1)[0]); values.push(kData[i]); }
+                let calc = (idx) => values.map(v => v[idx]);
+                chart.setOption({ grid: { x: 45, y: 15, y2: 25, right: '5%' }, tooltip: { trigger: "axis", padding: 0, backgroundColor: "rgba(0,0,0,0.7)", formatter: function(p) { var gl = parseFloat(p[0].data[6] * 100).toFixed(2); gggl(gl, p[0].data[5], p[0].data[7]); return `<div style="padding:10px; color:${gl>=0?"#0CF49B":"#FD1050"}">最高：${p[0].data[5]}<br/>${gl>=0?"上涨":"下跌"}概率：${Math.abs(gl)}%</div><div style="padding:10px; border-top:1px solid #555; color:#2D8FFD">最低：${p[0].data[7]}<br/>${p[0].name}</div>`; }, axisPointer: { type: "line" } }, xAxis: { type: "category", data: categoryData }, yAxis: { scale: true }, series: [ { type: "candlestick", data: values, itemStyle: { color: "#0CF49B", color0: "#FD1050", borderColor: "#0CF49B", borderColor0: "#FD1050" } }, { type: "line", data: calc(6), itemStyle: { color: "#2D8FFD" } }, { type: "line", data: calc(4), itemStyle: { color: "#F50FEE" } } ] });
+            });
+        }
+        if(obj.SixColorDragon20) {
+            renderChartSafely('liucai', (chart) => { chart.setOption({ tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } }, legend: { data: ['获利盘', '浮动盘', '套牢盘'], bottom: 0, textStyle: { fontSize: 11 } }, grid: { left: '12%', right: '5%', bottom: '20%', top: '15%' }, xAxis: { type: 'category', data: obj.SixColorDragon20.map(i => i[0]) }, yAxis: { type: 'value', max: 100 }, series: [ { name: '获利盘', type: 'bar', stack: 'total', data: obj.SixColorDragon20.map(i => i[2]), itemStyle: { color: '#e74c3c' } }, { name: '浮动盘', type: 'bar', stack: 'total', data: obj.SixColorDragon20.map(i => i[1]), itemStyle: { color: '#ffff00' } }, { name: '套牢盘', type: 'bar', stack: 'total', data: obj.SixColorDragon20.map(i => i[3]), itemStyle: { color: '#2ecc71' } }, { name: '趋势1', type: 'line', data: obj.SixColorDragon20.map(i => i[4]), itemStyle: { color: '#9b59b6' }, smooth: true, symbol: 'none' }, { name: '趋势2', type: 'line', data: obj.SixColorDragon20.map(i => i[5]), itemStyle: { color: '#3498db' }, smooth: true, symbol: 'none' }, { name: '趋势3', type: 'line', data: obj.SixColorDragon20.map(i => i[6]), itemStyle: { color: '#e67e22' }, smooth: true, symbol: 'none' } ] }); });
+        }
+        renderChartSafely('sixColorChart', (chart) => {
+            let yl = obj.YaLiZhiChengLuoPan?.Yali || "一般", zc = obj.YaLiZhiChengLuoPan?.ZhiCheng || "一般";
+            let status = "弱撑弱压区", level = "中等风险", color = "#0042ff", pVal = 2.5;
+            if(yl=="较大" && zc=="较弱"){ status="弱撑强压区"; level="极高风险"; color="#fc4407"; pVal = 0.5; }
+            else if(yl=="一般" && zc=="较弱"){ status="弱撑中压区"; level="较高风险"; color="#fdc404"; pVal = 1.5; }
+            else if(yl=="较大" && zc=="较大"){ status="强撑强压区"; level="一般安全"; color="#87cce7"; pVal = 3.5; }
+            else if(yl=="一般" && zc=="较大"){ status="强撑中压区"; level="较为安全"; color="#c1f478"; pVal = 4.5; }
+            else if(yl=="较弱" && zc=="较大"){ status="强撑弱压区"; level="非常安全"; color="#8feb8d"; pVal = 5.5; }
+            else if(yl=="较大" && zc=="一般"){ status="弱撑强压区"; level="极高风险"; color="#fc4407"; pVal = 0.5; }
+            else if(yl=="较弱" && zc=="一般"){ status="强撑弱压区"; level="非常安全"; color="#8feb8d"; pVal = 5.5; }
+            $('#compassStatus').text(status).css('color', color); $('#compassLevel').text(level).css('color', color);
+            $('#compassStockName').text($('#stkName').text() + ' ' + $('#stkCode').text());
+            chart.setOption({ series: [{ type: "gauge", center: ["50%", "55%"], radius: "90%", startAngle: 180, endAngle: 0, min: 0, max: 6, splitNumber: 6, axisLine: { lineStyle: { width: 30, color: [ [0.166, "#FC4407"], [0.333, "#FDC404"], [0.5, "#0042FF"], [0.666, "#87CCE7"], [0.833, "#C1F478"], [1, "#8FEB8D"] ] } }, pointer: { length: '70%', width: 6, itemStyle: { color: color } }, detail: { show: false }, data: [{ value: pVal }] }] });
+        });
+
+        // ================= 修復: 50結構 拔除氣泡並還原文字樣式 =================
+        if(obj.KLine20 && obj.FIVEJG) {
+            renderChartSafely('chart50', (chart) => {
+                let mp = []; 
+                obj.FIVEJG.forEach((item) => { 
+                    let k = obj.KLine20.find(i => i[0] === item[0]); 
+                    if(k) { 
+                        if(item[1]>0) mp.push({coord:[item[0], k[3]], value:item[1], symbol: 'circle', symbolSize: 0, label:{show:true, position:'bottom', color:'#2ecc71', fontSize: 14, fontWeight: 'bold'}}); 
+                        if(item[2]>0) mp.push({coord:[item[0], k[4]], value:item[2], symbol: 'circle', symbolSize: 0, label:{show:true, position:'top', color:'#e74c3c', fontSize: 14, fontWeight: 'bold'}}); 
+                    }
+                });
+                chart.setOption({ tooltip: { trigger: 'axis' }, grid: { left: '12%', right: '5%', bottom: '15%', top: '15%' }, xAxis: { type: 'category', data: obj.KLine20.map(i=>i[0]) }, yAxis: { scale: true }, series: [{ name: 'K线', type: 'candlestick', data: obj.KLine20.map(i=>[i[1], i[2], i[3], i[4]]), itemStyle: { color: '#0CF49B', color0: '#FD1050', borderColor: '#0CF49B', borderColor0: '#FD1050' }, markPoint: { data: mp } }] });
+            });
+        }
+        
+        if(obj.KLine20 && obj.TDSG) {
+            renderChartSafely('chartRadar', (chart) => { chart.setOption({ tooltip: { trigger: 'axis' }, legend: { data: ['K线', '天轨', '地轨'], bottom: 0 }, grid: { left: '12%', right: '5%', bottom: '20%', top: '15%' }, xAxis: { type: 'category', data: obj.KLine20.map(i=>i[0]) }, yAxis: { scale: true }, series: [ { name: 'K线', type: 'candlestick', data: obj.KLine20.map(i=>[i[1], i[2], i[3], i[4]]), itemStyle: { color: '#0CF49B', color0: '#FD1050', borderColor: '#0CF49B', borderColor0: '#FD1050' } }, { name: '天轨', type: 'line', data: obj.TDSG.map(i=>i[1]), smooth: true, symbol: 'none', lineStyle: { color: '#3498db' } }, { name: '地轨', type: 'line', data: obj.TDSG.map(i=>i[2]), smooth: true, symbol: 'none', lineStyle: { color: '#f1c40f' } } ] }); });
+        }
+        if(obj.KLine20) {
+            // ================= 修復: AI金牛 圖例開關丟失與方塊樣式 =================
+            renderChartSafely('goldCowMain', (chart) => {
+                let qsxhMap = {}, fcxMap = {};
+                if(obj.QSXH) obj.QSXH.forEach(i => qsxhMap[i[0]] = i[1]);
+                if(obj.FCX) obj.FCX.forEach(i => fcxMap[i[0]] = i);
+                let k1=[], k2=[], k3=[], k4=[], f0=Array(obj.KLine20.length).fill('-'), f1=[...f0], f2=[...f0];
+                obj.KLine20.forEach((item, i) => {
+                    let type = qsxhMap[item[0]] || 1, p = [item[1], item[2], item[3], item[4]];
+                    k1.push(type===1?p:'-'); k2.push(type===2?p:'-'); k3.push(type===3?p:'-'); k4.push(type===4?p:'-');
+                    let fcx = fcxMap[item[0]]; if(fcx && fcx[1]!=="-1"){ if(fcx[2]===0) f0[i]=fcx[1]; else if(fcx[2]===1) f1[i]=fcx[1]; else f2[i]=fcx[1]; }
+                });
+                chart.setOption({ 
+                    tooltip: { trigger: 'axis' }, 
+                    legend: { data: ['強勢', '震盪', '弱勢', '尋底'], top: 0, icon: 'roundRect' }, 
+                    grid: { left: '12%', right: '5%', bottom: '15%', top: '15%' }, 
+                    xAxis: { type: 'category', data: obj.KLine20.map(i=>i[0]) }, 
+                    yAxis: { scale: true }, 
+                    series: [ 
+                        { name: '強勢', type: 'candlestick', data: k1, barGap: '-100%', itemStyle: { color: '#FD1050', borderColor: '#FD1050' } }, 
+                        { name: '震盪', type: 'candlestick', data: k2, barGap: '-100%', itemStyle: { color: 'orange', borderColor: 'orange' } }, 
+                        { name: '弱勢', type: 'candlestick', data: k3, barGap: '-100%', itemStyle: { color: '#0000FC', borderColor: '#0000FC' } }, 
+                        { name: '尋底', type: 'candlestick', data: k4, barGap: '-100%', itemStyle: { color: '#0CF49B', borderColor: '#0CF49B' } }, 
+                        { name: '空頭防線', type: 'line', data: f0, lineStyle: { color: 'green' }, connectNulls: true, symbol: 'none'}, 
+                        { name: '多頭防線', type: 'line', data: f1, lineStyle: { color: 'red' }, connectNulls: true, symbol: 'none'}, 
+                        { name: '預警防線', type: 'line', data: f2, lineStyle: { color: 'yellow' }, connectNulls: true, symbol: 'none'} 
+                    ] 
+                });
+            });
+            if (obj.JN) renderChartSafely('goldCowFund', (chart) => { chart.setOption({ tooltip: { trigger: 'axis' }, grid: { left: '15%', right: '5%', bottom: '15%', top: '15%' }, xAxis: { type: 'category', data: obj.JN.map(i=>i[0]) }, yAxis: { type: 'value' }, series: [{ type: 'bar', data: obj.JN.map(i => ({ value: i[5], itemStyle: { color: i[4]===1?'#13E113':(i[4]===2?'#FF0E00':(i[4]===3?'#0000FE':'#1397FF')) } })) }] }); });
+            if (obj.DNC) renderChartSafely('goldCowDNC', (chart) => {
+                let dates = obj.KLine20.map(item => item[0]), dncData = [], markPointData = [], dncMap = {};
+                obj.DNC.forEach(item => { dncMap[item[0]] = item[1]; });
+                dates.forEach((date, index) => {
+                    let val = dncMap[date];
+                    if (val !== undefined && val !== -1) { dncData.push(val); if (val === 0) markPointData.push({ coord: [index, 10], symbol: 'rect', symbolSize: [15, 20], itemStyle: { color: '#00ff00' }}); else if (val === 100) markPointData.push({ coord: [index, 90], symbol: 'rect', symbolSize: [15, 20], itemStyle: { color: '#ff0000' }}); } else { dncData.push(null); }
+                });
+                chart.setOption({ tooltip: { trigger: 'axis' }, grid: { left: '12%', right: '5%', bottom: '15%', top: '10%' }, xAxis: { type: 'category', data: dates, axisLabel: { hideOverlap: true } }, yAxis: { type: 'value', min: 0, max: 100, splitNumber: 5 }, series: [{ name: 'DNC', type: 'line', data: dncData, smooth: true, symbol: 'none', lineStyle: { color: '#2c3e50', width: 2 }, markArea: { silent: true, data: [ [{ yAxis: 0, itemStyle: { color: '#CFFFCF' } }, { yAxis: 20 }], [{ yAxis: 20, itemStyle: { color: '#A6FFFF' } }, { yAxis: 40 }], [{ yAxis: 40, itemStyle: { color: '#FFF686' } }, { yAxis: 60 }], [{ yAxis: 60, itemStyle: { color: '#FFD2B3' } }, { yAxis: 80 }], [{ yAxis: 80, itemStyle: { color: '#FFB8B8' } }, { yAxis: 100 }] ] }, markPoint: { data: markPointData, label: { show: false } } }] });
+            });
+            // ================= 修復: 飛天通道 圖例開關與方塊樣式 =================
+            if(obj.FTLINE) renderChartSafely('swordMain', (chart) => {
+                let fMap = {}; obj.FTLINE.forEach(i => fMap[i[0]] = i);
+                chart.setOption({ 
+                    tooltip: { trigger: 'axis' }, 
+                    legend: { data: ['K线', '飞线', '中线', '天线', '流线'], top: 0, itemGap: 10, icon: 'roundRect' }, 
+                    grid: { left: '12%', right: '5%', bottom: '15%', top: '15%' }, 
+                    xAxis: { type: 'category', data: obj.KLine20.map(i=>i[0]) }, 
+                    yAxis: { scale: true }, 
+                    series: [ 
+                        { name: 'K线', type: 'candlestick', data: obj.KLine20.map(i=>[i[1], i[2], i[3], i[4]]), itemStyle: { color: '#0CF49B', color0: '#FD1050', borderColor: '#0CF49B', borderColor0: '#FD1050' } }, 
+                        { name: '飞线', type: 'line', data: obj.KLine20.map(i=>fMap[i[0]]?fMap[i[0]][1]:'-'), lineStyle: { color: '#00a32e' }, connectNulls: true, symbol: 'none' }, 
+                        { name: '中线', type: 'line', data: obj.KLine20.map(i=>fMap[i[0]]?fMap[i[0]][2]:'-'), lineStyle: { color: '#de0000' }, connectNulls: true, symbol: 'none' }, 
+                        { name: '天线', type: 'line', data: obj.KLine20.map(i=>fMap[i[0]]?fMap[i[0]][3]:'-'), lineStyle: { color: '#ffb300' }, connectNulls: true, symbol: 'none' }, 
+                        { name: '流线', type: 'line', data: obj.KLine20.map(i=>fMap[i[0]]?fMap[i[0]][4]:'-'), lineStyle: { color: '#00c8ff' }, connectNulls: true, symbol: 'none' } 
+                    ] 
+                });
+            });
+            if(obj.WAVEVOL) renderChartSafely('swordVolume', (chart) => { chart.setOption({ tooltip: { trigger: 'axis' }, legend: { data: ['买盘(红)', '买盘1(青)', 'CJ', 'CD', 'CK'], top: 0, textStyle: { fontSize: 11 } }, grid: { left: '12%', right: '5%', bottom: '15%', top: '15%' }, xAxis: { type: 'category', data: obj.WAVEVOL.map(i=>i[0]) }, yAxis: { scale: true }, series: [ { name: '买盘(红)', type: 'bar', stack: 'vol', data: obj.WAVEVOL.map(i=>i[2]), itemStyle: { color: '#ec0000' } }, { name: '买盘1(青)', type: 'bar', stack: 'vol', data: obj.WAVEVOL.map(i=>i[1]), itemStyle: { color: '#00ffff' } }, { name: 'CJ', type: 'line', data: obj.WAVEVOL.map(i=>i[3]), symbol: 'none', lineStyle: { color: '#B0B0B0' } }, { name: 'CD', type: 'line', data: obj.WAVEVOL.map(i=>i[4]), symbol: 'none', lineStyle: { color: '#ffb300' } }, { name: 'CK', type: 'line', data: obj.WAVEVOL.map(i=>i[5]), symbol: 'none', lineStyle: { color: '#ff00ff' } } ] }); });
+        }
+    }
+    function setupProbability(objDay) {
+        if(!objDay) return;
+        let setBar = (id, val) => { let num = parseFloat(val), isUp = num >= 0, absNum = Math.abs(num); $(`#${id}_0`).html(isUp ? `上涨 ${absNum}%` : `下跌 ${absNum}%`); $(`#${id}_0`).css("color", isUp ? "#c0392b" : "#27ae60"); $(`#${id}`).css({ "width": `${absNum}%`, "background": isUp ? "#e74c3c" : "#2ecc71" }); };
+        setBar('day5', objDay.day5chance); setBar('day13', objDay.day13chance); setBar('day21', objDay.day21chance);
+        let domPie = document.getElementById('main');
+        if(domPie && window.echarts) {
+            let myChart = echarts.getInstanceByDom(domPie) || echarts.init(domPie), chance1 = parseFloat(objDay.day1chance), isUp = chance1 >= 0, val = Math.abs(chance1);
+            $('#jrszgl').text(isUp ? '近日上涨概率' : '近日下跌概率');
+            myChart.setOption({ series: [{ type: 'pie', radius: ['50%', '80%'], label: { show: true, position: 'center', formatter: `${val}%`, fontSize: 24, fontWeight: 'bold', color: isUp ? '#e74c3c' : '#2ecc71' }, data: [ { value: val, itemStyle: { color: isUp ? '#e74c3c' : '#2ecc71' } }, { value: 100 - val, itemStyle: { color: '#ecf0f1' } } ] }] }, true);
+        }
+    }
+
+    const STRATEGY_DESC = {
+        1: "监控主力资金爆发性流入。主看 BBD 资金动能翻红。",
+        2: "结合 Banker Rhythm，锁定即将起飞的个股。",
+        3: "大数据筛选具备爆发基因的股票，适合追踪强势行情。",
+        4: "捕捉主升浪疯牛股，回踩支撑位即是买点。",
+        5: "与庄家共舞，同步主力的操作节奏。",
+        6: "强势庄家高度锁仓，筹码稳定，适合中长线。",
+        7: "识别庄家出货与洗盘，寻找空中加油机会。",
+        8: "短线资金活跃，波动极大，结合 BBD 信号。",
+        9: "捕捉非理性超跌后的底背离。主看「主力吸筹」。",
+        10: "隐秘吸筹后的第一根放量长阳，信号明确，起步速度快。"
+    };
+
+    const _base = atob("aHR0cHM6Ly9oY20ucnpmd3EuY29tL2h3aGNuZXdBL2x6d19jaG9vc2VTdG9ja0RhdGFWMi5zaG9w");
+    const _t1 = atob("ZjM4N2RiODk2MWNjYmJlZjRjODZlMDI0NmI2MDY2OWJiMDFlMDY0ODBlNDQ1ZmM2");
+    const _t2 = atob("ZjM4N2RiODk2MWNjYmJlZjM4NTY3YWVlZjI2N2Y3MmEyY2Y0MDkxZjdjNzk2MTBj");
+    function _getStratUrl(id, sp=false){ return `${_base}?jwcode=${sp?_t2:_t1}&id=${id}&from=1&version=1.0&city=my&language=cn`; }
+    const STRATEGY_URLS = { 1:_getStratUrl(37), 2:_getStratUrl(38), 3:_getStratUrl(34), 4:_getStratUrl(35), 5:_getStratUrl(36), 6:_getStratUrl(33), 7:_getStratUrl(32), 8:_getStratUrl(31), 9:_getStratUrl(29, true), 10:_getStratUrl(30) };
+
+    let currentStrategyIndex = 1;
+    let currentData = [], displayData = [];
+    let tvChartObj = null, subChartObj = null, mainCandleSeries = null, trendRibbonSeries = null, m4LineSeries = null;
+    let globalKlines = []; 
+    let sortCol = '', sortAsc = false;
+
+    function rma(s, l) { if(!s || !s.length) return []; let a=1/l, r=[s[0]], m=s[0]; for(let i=1; i<s.length; i++) { m=a*s[i]+(1-a)*m; r.push(m); } return r; }
+    function ema(s, l) { if(!s || !s.length) return []; let k=2/(l+1), r=[s[0]], m=s[0]; for(let i=1; i<s.length; i++) { m=(s[i]-m)*k+m; r.push(m); } return r; }
+
+    async function syncFromKLSEScreener() {
+        const overlay = document.getElementById('loadingOverlay');
+        if(overlay) overlay.classList.remove('hidden');
+        try {
+            const targetUrl = encodeURIComponent("https://www.klsescreener.com/v2/screener/quote_results");
+            const response = await fetch(PROXY_URL + targetUrl);
+            let htmlText = await response.text();
+            try { const json = JSON.parse(htmlText); if(json.content) htmlText = json.content; } catch(e) {}
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
+            const rows = doc.querySelectorAll('tr');
+            currentData = [];
+            rows.forEach((row, index) => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length < 5) return;
+                let code = "", name = "", codeIdx = -1;
+                for (let i = 0; i < Math.min(cells.length, 5); i++) {
+                    let text = cells[i].innerText.trim();
+                    if (/^\d{4}$/.test(text)) { code = text; codeIdx = i; name = cells[i-1] ? cells[i-1].innerText.trim().replace(/\s*\[[Ss]\]/g, '').trim() : "未知"; break; }
+                }
+                if (codeIdx !== -1) {
+                    let priceText = cells[codeIdx + 2] ? cells[codeIdx + 2].innerText.trim() : "0";
+                    let changeText = cells[codeIdx + 4] ? cells[codeIdx + 4].innerText.trim().replace('%', '') : "0";
+                    const p = parseFloat(priceText.replace(/,/g, ''));
+                    const c = parseFloat(changeText);
+                    if (!isNaN(p) && code) {
+                        currentData.push({ id: index, code, name, price: p.toFixed(2), change: isNaN(c) ? "0.00" : c.toFixed(2), signal: c > 1.2 ? 'Bullish' : (c < -1.2 ? 'Bearish' : 'Neutral') });
+                    }
+                }
+            });
+            applyFilters();
+        } catch (err) {
+            console.error(err);
+            document.getElementById('stockTableBody').innerHTML = `<tr><td colspan="4" class="py-20 text-center text-red-400">数据获取异常，网关受限。</td></tr>`;
+        } finally { if(overlay) overlay.classList.add('hidden'); }
+    }
+
+    function renderTable() {
+        const tb = document.getElementById('stockTableBody');
+        tb.innerHTML = '';
+        displayData.slice(0, 100).forEach(stock => {
+            const c = parseFloat(stock.change);
+            tb.innerHTML += `<tr class="hover:bg-slate-700/50 transition-colors cursor-pointer text-sm" onclick="openAIModal(${stock.id})"><td class="py-3 px-4"><div class="flex flex-col"><span class="font-bold text-white">${stock.name}</span><span class="text-[10px] text-slate-500">${stock.code}</span></div></td><td class="py-3 px-4 text-right font-medium text-white">${stock.price}</td><td class="py-3 px-4 text-right font-bold ${c > 0 ? 'text-up' : (c < 0 ? 'text-down' : 'text-slate-300')}">${c > 0 ? '+' : ''}${stock.change}%</td><td class="py-3 px-4 text-center"><button class="bg-primary/20 text-primary border border-primary/50 px-3 py-1 rounded text-xs">云推演</button></td></tr>`;
+        });
+        document.getElementById('stockCount').textContent = displayData.length;
+    }
+
+    function sortTable(c) { sortAsc = sortCol===c ? !sortAsc : true; sortCol=c; displayData.sort((a,b)=> { let va=parseFloat(a[c])||a[c], vb=parseFloat(b[c])||b[c]; return sortAsc ? (va>vb?1:-1) : (va<vb?1:-1); }); renderTable(); }
+    function applyFilters() { const sig = document.getElementById('signalFilter').value; displayData = currentData.filter(s => sig==='all' || s.signal===sig); renderTable(); }
+    function resetAllFilters() { document.getElementById('signalFilter').value='all'; applyFilters(); }
+    function debounceSearch() { 
+        const q = document.getElementById('globalSearch').value.toLowerCase();
+        displayData = currentData.filter(s => s.code.includes(q) || s.name.toLowerCase().includes(q));
+        renderTable();
+    }
+
+    async function loadStrategyData(index, btn) {
+        currentStrategyIndex = index;
+        document.querySelectorAll('.strategy-btn').forEach(b => {
+            b.classList.remove('active-strat');
+            b.style.backgroundColor = '#334155'; 
+            b.style.color = '#cbd5e1'; 
+        });
+        btn.classList.add('active-strat');
+        btn.style.backgroundColor = '#3b82f6';
+        btn.style.color = 'white';
+
+        document.getElementById('strategyDesc').innerText = STRATEGY_DESC[index];
+        const container = document.getElementById('strategyContent');
+        container.innerHTML = `<div class="py-32 text-center text-primary font-bold">正在扫描量化矩阵...</div>`;
+        try {
+            const res = await fetch(PROXY_URL + encodeURIComponent(STRATEGY_URLS[index]));
+            const json = await res.json();
+            let html = '';
+            json[0].data.forEach(block => {
+                html += `<div class="px-6 py-2 bg-slate-800/50 text-[10px] font-bold text-slate-400 border-y border-slate-700" style="background:rgba(30, 41, 59, 0.5);">${block.stockType} (${block.dataChild.length})</div><table class="w-full text-left"><tbody class="divide-y divide-slate-800">`;
+                block.dataChild.forEach(s => {
+                    const isUp = parseFloat(s.rose) >= 0;
+                    let tag = index === 9 ? '主力开始吸筹' : (index === 1 ? '资金集中度高' : '符合策略形态');
+                    let cleanName = s.stockName.replace(/\s*\[[Ss]\]/g, '').replace(/\([A-Za-z0-9]+\)/g, '').trim();
+                    html += `<tr class="hover:bg-slate-700/30 cursor-pointer transition-colors" onclick="openAIModalForStrategy('${s.code}', '${cleanName.replace(/'/g, "\\'")}')"><td class="px-6 py-3"><div class="flex flex-col"><span class="font-bold text-white">${cleanName}</span></div></td><td class="px-6 py-3 text-right text-sm">RM ${s.price}</td><td class="px-6 py-3 text-right text-sm font-bold ${isUp?'text-up':'text-down'}">${isUp?'+':''}${s.rose}%</td><td class="px-6 py-3 text-center text-[10px] text-primary whitespace-nowrap">${tag}</td></tr>`;
+                });
+                html += `</tbody></table>`;
+            });
+            container.innerHTML = html;
+        } catch (e) { container.innerHTML = `<div class="py-20 text-center">系统加载超时</div>`; }
+    }
+
+    function openAIModalForStrategy(c, n) { 
+        const tempId = 9000 + Math.floor(Math.random()*1000);
+        currentData.push({ id: tempId, code: c, name: n.replace(/\s*\[[Ss]\]/g, ''), signal: 'Neutral' });
+        openAIModal(tempId);
+    }
+
+    function performQuantAnalysis(klines) {
+        if(!klines.length) return { bankerVal:0, bankerBull:false, macdBull:false, finalSignal:'Neutral'};
+        const close = klines.map(k => k.close);
+        const e12 = ema(close, 12); const e26 = ema(close, 26);
+        const macd = e12.map((v, i) => v - e26[i]);
+        const sigLine = ema(macd, 9);
+        const hist = macd[macd.length-1] - sigLine[sigLine.length-1];
+        let var0 = [];
+        for (let i = 0; i < klines.length; i++) {
+            const win = klines.slice(Math.max(0, i-59), i+1);
+            let h60 = Math.max(...win.map(k => k.high)); let l60 = Math.min(...win.map(k => k.low));
+            var0.push(h60 === l60 ? 50 : ((klines[i].close - l60) / (h60 - l60)) * 100);
+        }
+        const var1 = rma(rma(var0, 3), 4);
+        const val = var1[var1.length-1] - 10;
+        const prev = var1[var1.length-2] - 10;
+        let score = 0;
+        if (val > 50) score += 2; else if (val > prev) score += 1;
+        if (hist > 0) score += 1;
+        return { bankerVal: val.toFixed(1), bankerBull: val > prev, macdBull: hist > 0, finalSignal: score >= 1 ? 'Bullish' : 'Bearish' };
+    }
+
+    async function generateDetailedAIText(q, stock) {
+        const node = document.getElementById('aiContent');
+        node.classList.remove('hidden'); 
+        document.getElementById('aiLoading').classList.remove('hidden');
+        node.innerHTML = '';
+
+        const stage = currentStrategyIndex === 9 ? '吸筹阶段' : '拉升阶段';
+        const prompt = `你是一位资深的量化分析师。请根据以下指标为 ${stock.name} (${stock.code}) 写一份简短且专业的个股分析报告。
+        - 阶段: ${stage}
+        - 主力控盘度: ${q.bankerVal} (>50表示高度控盘)
+        - 资金动能: ${q.bankerBull ? '转强' : '转弱'}
+        - MACD趋势: ${q.macdBull ? '多头' : '空头'}
+        - 判定: ${q.finalSignal === 'Bullish' ? '看涨' : '看跌'}
+        使用 Tailwind HTML 格式排版输出纯 HTML 代码。`;
+
+        try {
+            // 修复点1：修改为 gemini-2.5-flash 正式稳定版
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, { 
+                method: "POST", headers: { "Content-Type": "application/json" }, 
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
+            });
+            const json = await res.json();
+            
+            // 修复点2：捕获 API 返回的错误结构，而不是被底层强行吞掉
+            if (json.error) {
+                throw new Error(json.error.message);
+            }
+
+            let rawText = json.candidates?.[0]?.content?.parts?.[0]?.text || "<p class='text-slate-400'>无法生成深度分析。</p>";
+            
+            const codeBlockRegex = new RegExp('\\x60\\x60\\x60(?:html)?\\s*([\\s\\S]*?)\\s*\\x60\\x60\\x60');
+            let htmlMatch = rawText.match(codeBlockRegex);
+            node.innerHTML = htmlMatch ? htmlMatch[1] : rawText.replace(/\x60\x60\x60html/gi, '').replace(/\x60\x60\x60/g, '').trim();
+        } catch (e) { 
+            // 修复点3：将报错展示在控制台与页面上，方便排查
+            console.error("Gemini API 推演请求失败:", e);
+            node.innerHTML = `<p class='text-down'>AI 推演请求失败: ${e.message}</p>`; 
+        } finally {
+            document.getElementById('aiLoading').classList.add('hidden');
+        }
+    }
+
+    async function openAIModal(id) {
+        const stock = currentData.find(s => s.id === id);
+        if(!stock) return;
+        document.getElementById('modalStockName').textContent = `${stock.name} (${stock.code})`;
+        document.getElementById('aiModal').classList.remove('hidden');
+        document.getElementById('aiLoading').classList.remove('hidden');
+        document.getElementById('aiContent').classList.add('hidden');
+        
+        let defaultIndicator = currentStrategyIndex === 9 ? 'accumulation' : 'banker';
+        document.getElementById('indicatorSelect').value = defaultIndicator;
+
+        try {
+            const symbol = stock.code + ".KL";
+            const target = encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1y`);
+            const res = await fetch(PROXY_URL + target);
+            const data = await res.json();
+            const quote = data.chart.result[0].indicators.quote[0];
+            globalKlines = [];
+            for (let i = 0; i < data.chart.result[0].timestamp.length; i++) {
+                if (quote.close[i] == null) continue;
+                globalKlines.push({ 
+                    time: new Date(data.chart.result[0].timestamp[i]*1000).toISOString().split('T')[0], 
+                    open: quote.open[i], high: quote.high[i], low: quote.low[i], close: quote.close[i], volume: quote.volume[i] || 0
+                });
+            }
+            
+            setTimeout(() => {
+                renderMainChart(globalKlines);
+                drawIndicator(defaultIndicator);
+                const q = performQuantAnalysis(globalKlines);
+                document.getElementById('modalSignal').innerHTML = `<span class="${q.finalSignal==='Bullish'?'text-up':'text-down'}">${q.finalSignal==='Bullish'?'🔥 强势看涨':'⚠️ 盘整信号'}</span>`;
+                generateDetailedAIText(q, stock);
+            }, 100);
+        } catch (e) { 
+            console.error(e);
+            document.getElementById('aiLoading').innerHTML = `<span class="text-down">行情图表加载失败</span>`; 
+        }
+    }
+
+    function renderMainChart(data) {
+        const mb = document.getElementById('tvChartContainer');
+        mb.innerHTML = '';
+        tvChartObj = LightweightCharts.createChart(mb, { 
+            autoSize: true, 
+            layout: { textColor: '#d1d4dc', background: { type: 'solid', color: '#131722' } },
+            grid: { vertLines: { visible: false }, horzLines: { color: '#2b2b43' } },
+            timeScale: { visible: false }
+        });
+        mainCandleSeries = tvChartObj.addCandlestickSeries({ upColor: '#26a69a', downColor: '#ef5350', borderVisible: false, wickUpColor: '#26a69a', wickDownColor: '#ef5350' });
+        mainCandleSeries.setData(data);
+
+        const showTrend = document.getElementById('mainChartSelect').value === 'trend';
+        let jj = data.map(k => (k.high + k.low + k.close) / 3);
+        let a_ema = ema(jj, 13);
+        let ribbonData = [];
+        for (let i = 1; i < a_ema.length; i++) {
+            let t = data[i].time, A = a_ema[i], B = a_ema[i-1], isUp = A > B;
+            let col = isUp ? 'rgba(38, 166, 154, 0.6)' : 'rgba(239, 83, 80, 0.6)'; 
+            if(!isNaN(A) && !isNaN(B)) ribbonData.push({ time: t, open: B, close: A, high: Math.max(A, B), low: Math.min(A, B), color: col, borderColor: col, wickColor: col });
+        }
+        trendRibbonSeries = tvChartObj.addCandlestickSeries({ borderVisible: false, lastValueVisible: false, priceLineVisible: false, visible: showTrend });
+        trendRibbonSeries.setData(ribbonData);
+
+        let m2 = ema(data.map(k => k.close), 8), m4 = ema(m2, 55), m4Data = [];
+        for (let i = 0; i < m4.length; i++) if(!isNaN(m4[i])) m4Data.push({ time: data[i].time, value: m4[i] });
+        m4LineSeries = tvChartObj.addLineSeries({ color: '#f5cb5c', lineWidth: 2, lastValueVisible: false, priceLineVisible: false, visible: showTrend });
+        m4LineSeries.setData(m4Data);
+
+        tvChartObj.timeScale().fitContent();
+    }
+
+    function toggleMainIndicator() {
+        const show = document.getElementById('mainChartSelect').value === 'trend';
+        if (trendRibbonSeries) trendRibbonSeries.applyOptions({ visible: show });
+        if (m4LineSeries) m4LineSeries.applyOptions({ visible: show });
+    }
+
+    function drawIndicator(type) {
+        const sub = document.getElementById('subChartContainer');
+        sub.innerHTML = '';
+        subChartObj = LightweightCharts.createChart(sub, { 
+            autoSize: true, layout: { textColor: '#d1d4dc', background: { type: 'solid', color: '#131722' } },
+            grid: { vertLines: { visible: false }, horzLines: { color: '#2b2b43' } },
+            timeScale: { borderColor: '#2b2b43', timeVisible: true }
+        });
+        
+        tvChartObj.timeScale().subscribeVisibleTimeRangeChange(r => subChartObj.timeScale().setVisibleRange(r));
+
+        const closes = globalKlines.map(k => k.close), lows = globalKlines.map(k => k.low);
+        let markers = [];
+
+        if (type === 'bbd') {
+            let al = []; for (let i = 0; i < globalKlines.length; i++) al.push((globalKlines[i].close + globalKlines[i].low + globalKlines[i].high) / 3);
+            let rma_al_5 = rma(al, 5), rma_al_21 = rma(al, 21), ao = []; 
+            for (let i = 0; i < globalKlines.length; i++) ao.push(rma_al_5[i] - rma_al_21[i]);
+            let rma_ao_3 = rma(ao, 3), bbd = [];
+            for (let i = 0; i < globalKlines.length; i++) bbd.push((ao[i] - rma_ao_3[i]) * 100);
+
+            let bbdData = [];
+            for (let i = 1; i < bbd.length; i++) {
+                let t = globalKlines[i].time, v = bbd[i], prev_v = bbd[i-1], prev2_v = i > 1 ? bbd[i-2] : prev_v;
+                let isUp = v >= prev_v, wasUp = prev_v >= prev2_v, col = isUp ? 'rgba(38, 166, 154, 0.9)' : 'rgba(239, 83, 80, 0.9)'; 
+                if(!isNaN(v) && !isNaN(prev_v)) {
+                    bbdData.push({ time: t, open: prev_v, close: v, high: Math.max(prev_v, v), low: Math.min(prev_v, v), color: col, borderColor: col, wickColor: col });
+                    if (i > 1) {
+                        let isBuy = (!wasUp && isUp) || (prev_v <= 0 && v > 0), isSell = (wasUp && !isUp) || (prev_v >= 0 && v < 0);
+                        if (isBuy) markers.push({ time: t, position: 'belowBar', color: '#4caf50', shape: 'arrowUp', text: 'B' });
+                        else if (isSell) markers.push({ time: t, position: 'aboveBar', color: '#e91e63', shape: 'arrowDown', text: 'S' });
+                    }
+                }
+            }
+            const bbdSeries = subChartObj.addCandlestickSeries({ borderVisible: false }); bbdSeries.setData(bbdData);
+            bbdSeries.createPriceLine({ price: 0, color: '#f5cb5c', lineWidth: 1, lineStyle: 1 });
+            
+        } else if (type === 'banker') {
+            let var0 = [], var4 = [];
+            for (let i = 0; i < globalKlines.length; i++) {
+                const win = globalKlines.slice(Math.max(0, i - 59), i + 1);
+                let h60 = -Infinity, l60 = Infinity;
+                for(let k of win) { if(k.high > h60) h60 = k.high; if(k.low < l60) l60 = k.low; }
+                if(h60 === l60) { var0.push(50); var4.push(50); } else {
+                    var0.push(((globalKlines[i].close - l60) / (h60 - l60)) * 100);
+                    var4.push(((h60 - globalKlines[i].close) / (h60 - l60)) * 100);
+                }
+            }
+            const var1Raw = rma(rma(var0, 3), 4), var2Raw = rma(rma(var4, 3), 4);
+            let ribbon1Data = [], ribbon2Data = [];
+            for (let i = 1; i < var1Raw.length; i++) {
+                let t = globalKlines[i].time, v1 = var1Raw[i] - 10, v2 = var2Raw[i] - 90;
+                let prev_v1 = var1Raw[i-1] - 10, prev_v2 = var2Raw[i-1] - 90, prev2_v1 = i > 1 ? var1Raw[i-2] - 10 : prev_v1;
+                let col = (v1 >= prev_v1) ? 'rgba(239, 83, 80, 0.9)' : 'rgba(38, 166, 154, 0.9)'; 
+                if(!isNaN(v1) && !isNaN(v2) && !isNaN(prev_v1) && !isNaN(prev_v2)) {
+                    ribbon1Data.push({ time: t, open: prev_v1, close: v1, high: Math.max(prev_v1, v1), low: Math.min(prev_v1, v1), color: col, borderColor: col, wickColor: col });
+                    ribbon2Data.push({ time: t, open: prev_v2, close: v2, high: Math.max(prev_v2, v2), low: Math.min(prev_v2, v2), color: col, borderColor: col, wickColor: col });
+                    if (i > 1) {
+                        if (prev_v1 <= 50 && v1 > 50) markers.push({ time: t, position: 'aboveBar', color: '#e91e63', shape: 'arrowDown', text: 'C' });
+                        if (prev_v1 >= 50 && v1 < 50) markers.push({ time: t, position: 'aboveBar', color: '#ff9800', shape: 'arrowDown', text: 'S' });
+                        let hasB = (prev_v1 <= 0 && v1 > 0) || (prev_v1 <= prev2_v1 && v1 > prev_v1 && v1 < 10);
+                        if (hasB) markers.push({ time: t, position: 'belowBar', color: '#4caf50', shape: 'arrowUp', text: 'B' });
+                    }
+                }
+            }
+            const ribbon1 = subChartObj.addCandlestickSeries({ borderVisible: false }); ribbon1.setData(ribbon1Data);
+            ribbon1.createPriceLine({ price: 50, color: 'rgba(255, 235, 59, 0.4)', lineWidth: 1, lineStyle: 2 });
+            ribbon1.createPriceLine({ price: 0, color: '#888', lineWidth: 1, lineStyle: 1 });
+            const ribbon2 = subChartObj.addCandlestickSeries({ borderVisible: false }); ribbon2.setData(ribbon2Data);
+            ribbon2.createPriceLine({ price: -50, color: 'rgba(255, 235, 59, 0.4)', lineWidth: 1, lineStyle: 2 });
+
+        } else if (type === 'accumulation') {
+            let var1 = globalKlines.map((k, i) => (k.open + k.high + k.low + k.close) / 4);
+            let m = globalKlines.map((k, i) => i === 0 ? 0 : Math.max(k.low - var1[i-1], 0));
+            let abs_diff = globalKlines.map((k, i) => i === 0 ? 0 : Math.abs(k.low - var1[i-1]));
+            let var2 = rma(abs_diff, 13).map((v, i) => v / (rma(m, 10)[i] || 1));
+            let var3 = ema(var2, 10);
+            let var5 = ema(globalKlines.map((k, i) => (k.low <= Math.min(...lows.slice(Math.max(0, i-32), i+1))) ? var3[i] : 0), 3);
+            let diff = globalKlines.map((c, i) => i === 0 ? 0 : c.close - globalKlines[i-1].close);
+            let rsi1 = rma(diff.map(v => Math.max(v, 0)), 12).map((v, i) => (v / (rma(diff.map(v => Math.abs(v)), 12)[i] || 1)) * 100);
+            let accData = [];
+            for (let i = 1; i < var5.length; i++) {
+                let col = rsi1[i] < 30 ? (var5[i] > (var5[i-1]||0) ? 'rgba(239, 83, 80, 0.9)' : 'rgba(38, 166, 154, 0.9)') : 'rgba(100, 100, 100, 0.2)';
+                accData.push({ time: globalKlines[i].time, value: var5[i], color: col });
+            }
+            subChartObj.addHistogramSeries({ base: 0 }).setData(accData);
+
+        } else if (type === 'volume') {
+            const volSeries = subChartObj.addHistogramSeries({ color: '#26a69a', priceFormat: { type: 'volume' } });
+            volSeries.setData(globalKlines.map((k, i) => ({ time: k.time, value: k.volume, color: (i > 0 && k.close < globalKlines[i-1].close) ? 'rgba(239, 83, 80, 0.8)' : 'rgba(38, 166, 154, 0.8)' })));
+
+        } else if (type === 'macd') {
+            const ema12 = ema(closes, 12), ema26 = ema(closes, 26), macdLine = []; 
+            for(let i=0; i<closes.length; i++) macdLine.push(ema12[i] - ema26[i]);
+            const signalLine = ema(macdLine, 9);
+            let macdData = [], signalData = [], histData = [];
+            for(let i=0; i<closes.length; i++) {
+                let t = globalKlines[i].time, hist = macdLine[i] - signalLine[i];
+                macdData.push({ time: t, value: macdLine[i] }); signalData.push({ time: t, value: signalLine[i] });
+                histData.push({ time: t, value: hist, color: hist >= 0 ? 'rgba(38, 166, 154, 0.8)' : 'rgba(239, 83, 80, 0.8)' });
+            }
+            subChartObj.addHistogramSeries({ base: 0 }).setData(histData);
+            subChartObj.addLineSeries({ color: '#2962FF', lineWidth: 2 }).setData(macdData);
+            subChartObj.addLineSeries({ color: '#FF6D00', lineWidth: 2 }).setData(signalData);
+        }
+
+        if (mainCandleSeries) mainCandleSeries.setMarkers(markers);
+        subChartObj.timeScale().fitContent();
+    }
+
+    async function generateMarketReview() {
+        const m = document.getElementById('reviewModal'); m.classList.remove('hidden');
+        const c = document.getElementById('reviewContent'); c.innerHTML = '<div class="py-20 text-center"><i class="fa-solid fa-brain fa-fade text-5xl text-indigo-500"></i></div>';
+        
+        let up=0, down=0, total=currentData.length;
+        currentData.forEach(s => { if(parseFloat(s.change)>0) up++; else if(parseFloat(s.change)<0) down++; });
+        
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' });
+        
+        const prompt = `时间：${dateStr} ${timeStr}。根据最新收盘数据，大盘上涨 ${up}，下跌 ${down}，总活跃股 ${total}。撰写一份资深分析报告，包含市场情绪与策略。使用 Tailwind HTML 格式。注意：只输出纯 HTML 代码。`;
+        
+        try {
+            // 修复点4：同样修改这里的模型版本
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, { 
+                method: "POST", headers: { "Content-Type": "application/json" }, 
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
+            });
+            const json = await res.json();
+
+            // 修复点5：捕获错误
+            if (json.error) {
+                throw new Error(json.error.message);
+            }
+
+            let rawText = json.candidates?.[0]?.content?.parts?.[0]?.text || "无数据";
+            const codeBlockRegex = new RegExp('\\x60\\x60\\x60(?:html)?\\s*([\\s\\S]*?)\\s*\\x60\\x60\\x60');
+            let htmlMatch = rawText.match(codeBlockRegex);
+            let aiHtml = htmlMatch ? htmlMatch[1] : rawText.replace(/\x60\x60\x60html/gi, '').replace(/\x60\x60\x60/g, '').trim();
+            
+            c.innerHTML = `<div class="mb-4 p-4 rounded border border-slate-700 grid grid-cols-3 text-center" style="background:#0f172a;"><div><div class="text-xs text-slate-500">上涨</div><div class="font-bold text-up">${up}</div></div><div><div class="text-xs text-slate-500">下跌</div><div class="font-bold text-down">${down}</div></div><div><div class="text-xs text-slate-500">广度</div><div class="font-bold text-primary">${total ? ((up/total)*100).toFixed(1) : 0}%</div></div></div>${aiHtml}`;
+        } catch (e) { 
+            // 修复点6：将报错展示出来
+            console.error("Gemini API 复盘请求失败:", e);
+            c.innerHTML = `<p class="text-down text-center py-10">AI 云端核心暂时离线。报错信息: ${e.message}</p>`; 
+        }
+    }
+
+    function switchIndicator() { drawIndicator(document.getElementById('indicatorSelect').value); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+</script>
+</body>
+</html>
