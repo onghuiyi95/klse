@@ -56,3 +56,21 @@ payload:  mode=cinfo&counter_key=2_1155
 
 https://theme.chartnexus.com/ginfo/KLSE/1155.txt
 
+x-api key
+kls_app_gfZpWmuochzJAfeB8BerrgcBrFrHq-Ik
+
+
+https://kleverstock-api-422735498549.us-central1.run.app/api/v1/market/price-targets
+https://kleverstock-api-422735498549.us-central1.run.app/api/v1/market/fbmklci
+https://kleverstock-api-422735498549.us-central1.run.app/api/v1/market/top-active
+https://kleverstock-api-422735498549.us-central1.run.app/api/v1/market/bursa-indices
+https://api.kleverstock.live/api/news/user-get-news-v2?categories%5B%5D=Business&
+https://kleverstock-api-422735498549.us-central1.run.app/api/v1/stocks/0041
+https://kleverstock-api-422735498549.us-central1.run.app/api/v1/stocks/0041/price
+
+kls_app_gfZpWmuochzJAfeB8BerrgcBrFrHq-Ik
+
+https://kleverstock-api-422735498549.us-central1.run.app/api/v1/stocks/0041/fundamentals
+https://api.kleverstock.live/api/news/user-get-news?tagName=AIMAX&tagType=ticker&active=true&userId=1940&language=EN&isKleverstock=true
+https://kleverstock-api-422735498549.us-central1.run.app/api/v1/stocks/0041/ohlcv?period=1Y
+https://kleverstock-api-422735498549.us-central1.run.app/api/v1/stocks/0041/price-targets
