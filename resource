@@ -74,3 +74,13 @@ https://kleverstock-api-422735498549.us-central1.run.app/api/v1/stocks/0041/fund
 https://api.kleverstock.live/api/news/user-get-news?tagName=AIMAX&tagType=ticker&active=true&userId=1940&language=EN&isKleverstock=true
 https://kleverstock-api-422735498549.us-central1.run.app/api/v1/stocks/0041/ohlcv?period=1Y
 https://kleverstock-api-422735498549.us-central1.run.app/api/v1/stocks/0041/price-targets
+
+https://s1.thetradewizard.com/api/v1/tvCharts/history?symbol=AZRB&resolution=5&from=1784701227&to=1784998227&countback=330&currencyCode=MYR
+https://s1.thetradewizard.com/v1/tickers.snapshot.fundamentals.get
+{"reqs":[{"ticker":"2429","fetag":""}]}
+
+https://s1.thetradewizard.com/v1/tickers.snapshot.technicals.get
+{"tickers":["2429"]}
+https://s1.thetradewizard.com/v1/ticker.trades.agg?input=%7B%22ticker%22%3A%222429%22%7D
+
+
