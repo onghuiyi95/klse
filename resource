@@ -39,6 +39,7 @@ https://www.shareinvestor.com/api/v1/charts/c2_charts_data?id=1155.MY&to_retriev
 https://www.shareinvestor.com/api/v1/charts/c2_charts_data?id=1155.MY&fromdate=20240118&todate=20250423&to_retrieve=historical_price&ciqrandom=1784996238780
 https://p2.pickastock.info/TradingView/history?symbol=AIMAX&resolution=1D&from=1741132800&to=1742342400&countback=10
 https://p2.pickastock.info/TradingView/history?symbol=AIMAX&resolution=1D&from=1745366400&to=1785196800&countback=330
+https://p1.pickastock.info/TradingView/history?symbol=MAYBANK&resolution=1D&from=1318204800&to=1376092800&countback=479
 https://p2.pickastock.info/TradingView/symbols?symbol=AIMAX
 https://p1.pickastock.info/api/Stock/Peers?id=AIMAX
 https://p1.pickastock.info/api/Post/SocialMedia?key=AIMAX&page=1&rows=4
@@ -84,4 +85,4 @@ https://s1.thetradewizard.com/v1/tickers.snapshot.technicals.get
 https://s1.thetradewizard.com/v1/ticker.trades.agg?input=%7B%22ticker%22%3A%222429%22%7D
 Bearer eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDExMUFBQSIsImtpZCI6Imluc18yVFNxQmhMOG9EWmE1MnJHcVJDekxzN3RsTUwiLCJvaWF0IjoxNzg0OTk4NTIyLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJodHRwczovL3d3dy50aGV0cmFkZXdpemFyZC5jb20iLCJleHAiOjE3ODQ5OTg1ODIsImZ2YSI6WzgsLTFdLCJpYXQiOjE3ODQ5OTg1MjIsImlzcyI6Imh0dHBzOi8vY2xlcmsudGhldHJhZGV3aXphcmQuY29tIiwianRpIjoiNDA5YzMwMWZiMDU0M2FkNDA5MDMiLCJuYmYiOjE3ODQ5OTg1MTIsInByaW1hcnlfZW1haWxfYWRkcmVzcyI6ImJlbjk1LnN1cnJleUBnbWFpbC5jb20iLCJzaWQiOiJzZXNzXzNIMEhPUFdVQ0JZaGEyaGY3bXpxNnNpSWRscCIsInN0cyI6ImFjdGl2ZSIsInN1YiI6InVzZXJfM0gwSE9RUm0wQm93ZXFRYU1xcWJOaWRCbkxYIiwidiI6Mn0.h4-1V0aMWZSI5uwcctjQJedWcpZIhR6ypaYmZegJPKy5GNJIaGYDkooC9eLUCmnPhlYw4r023-pyYu1kmK-tw85nQjXCJms6cPGDf1kH4uuJNbXQBF3JQL6oWM_RbuJZN5lO8XVfQMZtoNK2D9PikdQUOCyPbz-QfjArfVfvwOg4j6wIb_qvA0dJU2H6H5CmxZexGm4LmSTFmcEjLtdcNDIdZ0si1VcjdpuJ-nEBIdy5xTyddWoRLRmbh3nf2s0F9gPSHjoRktksvF4g_qjzvgOguD2G-UV-4BNPYDstEjTmoeJXyQplfwiIbIWLzR1jv2CSlbccBaxqdjCjcMpdLA
 
-
+https://ws.shareinvestor.com/web_services/v2/charts/chart_quotes.xml?callback=jQuery111105240416739974323_1785463213285&to_retrieve%5B%5D=historical_price&to_retrieve%5B%5D=news&years_of_news=5&years_of_historical_prices=5&days_of_intraday_prices=7&id=0095.MY&chg_pretrades_timing=0&with_married_deals=0&ws_hmac=a2859523f1f0f4c83ade67472f96f44f63a6bf2f86b3193107ffed04d79893b6&ws_m1=0095.MY&ws_m2=1785463209&_=1785463213286
