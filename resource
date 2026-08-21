@@ -88,3 +88,9 @@ Bearer eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDExMUFBQSIsImtpZCI6Imluc18yVFNxQ
 https://ws.shareinvestor.com/web_services/v2/charts/chart_quotes.xml?callback=jQuery111105240416739974323_1785463213285&to_retrieve%5B%5D=historical_price&to_retrieve%5B%5D=news&years_of_news=5&years_of_historical_prices=5&days_of_intraday_prices=7&id=0095.MY&chg_pretrades_timing=0&with_married_deals=0&ws_hmac=a2859523f1f0f4c83ade67472f96f44f63a6bf2f86b3193107ffed04d79893b6&ws_m1=0095.MY&ws_m2=1785463209&_=1785463213286
 https://ws.shareinvestor.com/web_services/v2/charts/chart_quotes.xml?callback=jQuery111105240416739974323_1785463213285&to_retrieve%5B%5D=historical_price&to_retrieve%5B%5D=news&years_of_news=5&years_of_historical_prices=5&days_of_intraday_prices=7&id=0095.MY&chg_pretrades_timing=0&with_married_deals=0&ws_hmac=a2859523f1f0f4c83ade67472f96f44f63a6bf2f86b3193107ffed04d79893b6&ws_m1=0095.MY&ws_m2=1785463209&_=1785463213286
 https://www.shareinvestor.com/api/v1/charts/factsheet_overview_chart_data?id=BURSA:1155&to_retrieve=intraday_price&intraday_compress_period=1&from=20260702:205000&to=20260801:205000&ciqrandom=1785463513736
+
+https://chartnova.io/api/chart/1155.kl?interval=1d&range=2d
+https://chartnova.io/api/chart/NVDA?interval=1d&range=1y
+https://chartnova.io/api/news/NVDA
+https://chartnova.io/api/chart/NVDA?interval=1d&range=1y
+https://chartnova.io/api/chart/BTC-USD?interval=1d&range=1y
